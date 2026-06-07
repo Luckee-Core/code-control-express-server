@@ -6,12 +6,13 @@ import { Router, Request, Response } from 'express';
 import { getManagedSupabaseClient } from '../../db/supabase-client';
 import {
   getAllProjects,
-  getProjectsByWorkspaceId,
+  getProjectsByCustomerId,
   getProjectById,
   createProject,
   updateProject,
   deleteProject,
 } from './index';
+
 export const createProjectsRouter = (): Router => {
   const router = Router();
 
@@ -29,18 +30,18 @@ export const createProjectsRouter = (): Router => {
     }
   });
 
-  router.get('/workspace/:workspaceId', async (req: Request, res: Response): Promise<void> => {
+  router.get('/customer/:customerId', async (req: Request, res: Response): Promise<void> => {
     try {
-      const { workspaceId } = req.params;
-      if (!workspaceId || Array.isArray(workspaceId)) {
+      const { customerId } = req.params;
+      if (!customerId || Array.isArray(customerId)) {
         res.status(400).json({ success: false, error: 'Invalid customer ID' });
         return;
       }
       const supabase = getManagedSupabaseClient();
-      const projects = await getProjectsByWorkspaceId(supabase, workspaceId);
+      const projects = await getProjectsByCustomerId(supabase, customerId);
       res.status(200).json({ success: true, data: projects, count: projects.length });
     } catch (error) {
-      console.error('Error in GET /api/data/projects/workspace/:workspaceId:', error);
+      console.error('Error in GET /api/data/projects/customer/:customerId:', error);
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -73,11 +74,11 @@ export const createProjectsRouter = (): Router => {
 
   router.post('/', async (req: Request, res: Response): Promise<void> => {
     try {
-      const { workspace_id, name, description, app_type, external_customer_id } = req.body;
-      if (!workspace_id || !name || typeof name !== 'string' || !name.trim()) {
+      const { customer_id, name, description, app_type } = req.body;
+      if (!customer_id || !name || typeof name !== 'string' || !name.trim()) {
         res.status(400).json({
           success: false,
-          error: 'workspace_id and name are required',
+          error: 'customer_id and name are required',
         });
         return;
       }
@@ -87,14 +88,10 @@ export const createProjectsRouter = (): Router => {
         return;
       }
       const project = await createProject(supabase, {
-        workspace_id,
+        customer_id,
         name: name.trim(),
         description: description?.trim() ?? null,
         app_type: app_type && typeof app_type === 'string' ? app_type : undefined,
-        external_customer_id:
-          external_customer_id && typeof external_customer_id === 'string'
-            ? external_customer_id
-            : null,
       });
       res.status(201).json({ success: true, data: project });
     } catch (error) {

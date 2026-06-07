@@ -47,7 +47,7 @@ export const runCrudApiGeneration = async (
   try {
     // Fetch repo
     const { data: repo, error: repoError } = await supabase
-      .from('project_repos')
+      .from('customer_project_repos')
       .select('*')
       .eq('id', repoId)
       .single();

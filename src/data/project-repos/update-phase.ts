@@ -20,7 +20,7 @@ export const updateProjectRepoPhase = async (
   if (input.phase_status !== undefined) updateData.phase_status = input.phase_status;
 
   const { data, error } = await supabase
-    .from('project_repos')
+    .from('customer_project_repos')
     .update(updateData)
     .eq('id', repoId)
     .select()

@@ -1,5 +1,5 @@
 -- ============================================================================
--- Add app_type to projects for app-type-driven workspace
+-- Add app_type to customer_projects for app-type-driven project setup
 -- ============================================================================
 
 DO $$ BEGIN
@@ -8,11 +8,11 @@ EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
-ALTER TABLE projects
+ALTER TABLE customer_projects
 ADD COLUMN IF NOT EXISTS app_type app_type DEFAULT 'custom',
 ADD COLUMN IF NOT EXISTS app_type_config JSONB DEFAULT '{}'::jsonb;
 
-CREATE INDEX IF NOT EXISTS idx_projects_app_type ON projects(app_type);
+CREATE INDEX IF NOT EXISTS idx_customer_projects_app_type ON customer_projects(app_type);
 
-COMMENT ON COLUMN projects.app_type IS 'Template/app type for project (marketplace, field_service, etc.)';
-COMMENT ON COLUMN projects.app_type_config IS 'App-type-specific configuration overrides';
+COMMENT ON COLUMN customer_projects.app_type IS 'Template/app type for project (marketplace, field_service, etc.)';
+COMMENT ON COLUMN customer_projects.app_type_config IS 'App-type-specific configuration overrides';

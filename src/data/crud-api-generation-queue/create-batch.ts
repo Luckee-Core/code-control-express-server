@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { queueProjectIdInsertFields } from '../../utils/queue';
 
 type CreateQueueItemInput = {
   project_id: string;
@@ -14,7 +15,12 @@ export const createCrudApiQueueBatch = async (
   items: CreateQueueItemInput[]
 ) => {
   const rows = items.map((item) => ({
-    ...item,
+    ...queueProjectIdInsertFields(item.project_id),
+    repo_id: item.repo_id,
+    entity_id: item.entity_id,
+    task_id: item.task_id,
+    operation_key: item.operation_key,
+    file_path: item.file_path,
     status: 'queued',
   }));
   const { data, error } = await supabase

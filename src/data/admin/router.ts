@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { createWorkspacesRouter } from '../workspaces/router';
+import { createCustomersRouter } from '../customers/router';
 import { createProjectsRouter } from '../projects/router';
 import { createProjectReposRouter } from '../project-repos/router';
 import { createProjectSetupRouter } from '../project-setup/router';
@@ -34,7 +34,7 @@ import { createConventionTaskCategoriesRouter } from '../convention-task-categor
 export const createAdminRouter = (): Router => {
   const router = Router();
 
-  router.use('/workspaces', createWorkspacesRouter());
+  router.use('/customers', createCustomersRouter());
   router.use('/projects/:id/project-setup', createProjectSetupRouter());
   router.use('/projects', createProjectsRouter());
   router.use('/project-repos', createProjectReposRouter());

@@ -1,18 +1,18 @@
 /**
- * Get Customer Projects By Customer ID
+ * Get customer projects by customer ID
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Project } from './get-all';
 
-export const getProjectsByWorkspaceId = async (
+export const getProjectsByCustomerId = async (
   supabase: SupabaseClient,
-  workspaceId: string
+  customerId: string
 ): Promise<Project[]> => {
   const { data, error } = await supabase
-    .from('projects')
+    .from('customer_projects')
     .select('*')
-    .eq('workspace_id', workspaceId)
+    .eq('customer_id', customerId)
     .order('created_at', { ascending: true });
 
   if (error) {

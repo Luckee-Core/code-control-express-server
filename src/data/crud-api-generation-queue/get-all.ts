@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { normalizeQueueProjectIds } from '../../utils/queue';
 
 export type CrudApiGenerationQueueItem = {
   id: string;
@@ -27,5 +28,5 @@ export const getAllCrudApiQueue = async (supabase: SupabaseClient): Promise<Crud
     throw error;
   }
 
-  return data || [];
+  return normalizeQueueProjectIds(data || []);
 };

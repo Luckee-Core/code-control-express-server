@@ -1,13 +1,12 @@
 /**
- * Project type (matches projects table)
+ * Project type (matches customer_projects table; API route is /projects)
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
 
 export type Project = {
   id: string;
-  workspace_id: string;
-  external_customer_id: string | null;
+  customer_id: string;
   name: string;
   description: string | null;
   app_type?: string;
@@ -24,7 +23,7 @@ export const getAllProjects = async (
   supabase: SupabaseClient
 ): Promise<Project[]> => {
   const { data, error } = await supabase
-    .from('projects')
+    .from('customer_projects')
     .select('*')
     .order('updated_at', { ascending: false });
 

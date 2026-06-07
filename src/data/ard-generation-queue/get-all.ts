@@ -1,5 +1,6 @@
 import { getManagedSupabaseClient } from '../../db/supabase-client';
 import { ARDGenerationQueue } from '../../db/types';
+import { normalizeQueueProjectIds } from '../../utils/queue';
 
 export const getAllARDGenerationQueue = async (): Promise<ARDGenerationQueue[]> => {
   const supabase = getManagedSupabaseClient();
@@ -14,5 +15,5 @@ export const getAllARDGenerationQueue = async (): Promise<ARDGenerationQueue[]> 
     throw error;
   }
 
-  return data || [];
+  return normalizeQueueProjectIds(data || []);
 };

@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ARDGenerationQueue } from '../../db/types';
+import { normalizeQueueProjectId, queueProjectIdInsertFields } from '../../utils/queue';
 
 export type CreateARDQueueItemInput = {
   project_id: string;
@@ -18,7 +19,9 @@ export const createARDQueueItem = async (
   const { data, error } = await supabase
     .from('ard_generation_queue')
     .insert({
-      ...input,
+      ...queueProjectIdInsertFields(input.project_id),
+      repo_id: input.repo_id,
+      task_id: input.task_id,
       scheduled_at: input.scheduled_at || new Date().toISOString(),
       status: 'queued',
     })
@@ -29,5 +32,5 @@ export const createARDQueueItem = async (
     throw new Error(`Failed to create ARD queue item: ${error.message}`);
   }
 
-  return data;
+  return normalizeQueueProjectId(data);
 };

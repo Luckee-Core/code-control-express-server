@@ -125,7 +125,7 @@ export const createProjectSetupRouter = (): Router => {
       }
 
       await insertProjectRepo(supabase, {
-        workspace_id: project.workspace_id,
+        customer_id: project.customer_id,
         project_id: projectId,
         repo_type: repoType,
         name: newRepoName,

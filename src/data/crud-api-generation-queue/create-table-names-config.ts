@@ -1,6 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getAllCrudApiTasks } from '../crud-api-tasks';
 import type { CrudApiGenerationQueueItem } from './get-all';
+import {
+  CUSTOMER_QUEUE_PROJECT_ID_COLUMN,
+  normalizeQueueProjectId,
+  queueProjectIdInsertFields,
+} from '../../utils/queue';
 
 const TABLE_NAMES_CONFIG_OPERATION_KEY = 'table_names_config';
 
@@ -26,20 +31,20 @@ export const createTableNamesConfigQueueItem = async (
   const { data: existing } = await supabase
     .from('crud_api_generation_queue')
     .select('*')
-    .eq('project_id', input.project_id)
+    .eq(CUSTOMER_QUEUE_PROJECT_ID_COLUMN, input.project_id)
     .eq('repo_id', input.repo_id)
     .eq('task_id', task.id)
     .is('entity_id', null)
     .maybeSingle();
 
   if (existing) {
-    return existing as CrudApiGenerationQueueItem;
+    return normalizeQueueProjectId(existing) as CrudApiGenerationQueueItem;
   }
 
   const { data: inserted, error } = await supabase
     .from('crud_api_generation_queue')
     .insert({
-      project_id: input.project_id,
+      ...queueProjectIdInsertFields(input.project_id),
       repo_id: input.repo_id,
       entity_id: null,
       task_id: task.id,
@@ -55,17 +60,17 @@ export const createTableNamesConfigQueueItem = async (
       const { data: existingAfterConflict } = await supabase
         .from('crud_api_generation_queue')
         .select('*')
-        .eq('project_id', input.project_id)
+        .eq(CUSTOMER_QUEUE_PROJECT_ID_COLUMN, input.project_id)
         .eq('repo_id', input.repo_id)
         .eq('task_id', task.id)
         .is('entity_id', null)
         .single();
       if (existingAfterConflict) {
-        return existingAfterConflict as CrudApiGenerationQueueItem;
+        return normalizeQueueProjectId(existingAfterConflict) as CrudApiGenerationQueueItem;
       }
     }
     throw error;
   }
 
-  return inserted as CrudApiGenerationQueueItem;
+  return normalizeQueueProjectId(inserted) as CrudApiGenerationQueueItem;
 };

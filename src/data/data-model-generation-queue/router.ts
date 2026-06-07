@@ -6,6 +6,7 @@ import { getDueDataModelQueueItems } from './get-due-items';
 import { updateDataModelQueueStatus } from './update-status';
 import { deleteDataModelQueueItem } from './delete';
 import { processDataModelQueue } from '../../services/data-model-generation';
+import { normalizeQueueProjectIds } from '../../utils/queue';
 
 export const createDataModelGenerationQueueRouter = (): Router => {
   const router = Router();
@@ -27,7 +28,7 @@ export const createDataModelGenerationQueueRouter = (): Router => {
         throw error;
       }
 
-      res.json({ success: true, data: queue });
+      res.json({ success: true, data: normalizeQueueProjectIds(queue || []) });
     } catch (error: any) {
       console.error('❌ Error in GET /:', error);
       res.status(500).json({ success: false, error: error.message });

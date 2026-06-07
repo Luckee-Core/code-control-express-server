@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { ARDGenerationQueue } from '../../db/types';
+import { normalizeQueueProjectIds } from '../../utils/queue';
 
 /**
  * Get all ARD generation queue items for a repo
@@ -18,5 +19,5 @@ export const getARDQueueByRepo = async (
     throw new Error(`Failed to fetch ARD queue items: ${error.message}`);
   }
 
-  return data || [];
+  return normalizeQueueProjectIds(data || []);
 };

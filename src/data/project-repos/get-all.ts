@@ -5,7 +5,7 @@ export const getAllProjectRepos = async (): Promise<ProjectRepo[]> => {
   const supabase = getManagedSupabaseClient();
 
   const { data, error } = await supabase
-    .from('project_repos')
+    .from('customer_project_repos')
     .select('*')
     .order('created_at', { ascending: false });
 

@@ -21,7 +21,7 @@ export const createDataEntity = async (
   let assignedRepoIds = input.assigned_repo_ids ?? [];
   if (assignedRepoIds.length === 0) {
     const { data: repos } = await supabase
-      .from('project_repos')
+      .from('customer_project_repos')
       .select('id')
       .eq('project_id', input.project_id)
       .eq('repo_type', 'express')

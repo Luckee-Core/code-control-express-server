@@ -9,7 +9,7 @@ export const deleteProject = async (
   id: string
 ): Promise<void> => {
   const { error } = await supabase
-    .from('projects')
+    .from('customer_projects')
     .delete()
     .eq('id', id);
 

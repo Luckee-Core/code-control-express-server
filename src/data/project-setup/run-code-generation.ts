@@ -46,7 +46,7 @@ export const runCodeGeneration = async (
 
   try {
     const { data: repo, error: repoError } = await supabase
-      .from('project_repos')
+      .from('customer_project_repos')
       .select('*')
       .eq('id', repoId)
       .single();

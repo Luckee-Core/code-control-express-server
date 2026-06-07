@@ -10,7 +10,7 @@ export const getProjectReposByProjectId = async (
   projectId: string
 ): Promise<ProjectRepo[]> => {
   const { data, error } = await supabase
-    .from('project_repos')
+    .from('customer_project_repos')
     .select('*')
     .eq('project_id', projectId)
     .order('repo_type', { ascending: true });

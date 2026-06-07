@@ -22,7 +22,7 @@ export const updateProject = async (
   if (input.description !== undefined) updateData.description = input.description?.trim() ?? null;
 
   const { data, error } = await supabase
-    .from('projects')
+    .from('customer_projects')
     .update(updateData)
     .eq('id', id)
     .select()

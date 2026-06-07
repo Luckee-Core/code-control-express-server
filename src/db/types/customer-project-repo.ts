@@ -1,6 +1,6 @@
 export type ProjectRepo = {
   id: string;
-  workspace_id: string;
+  customer_id: string;
   project_id: string;
   repo_type: 'express' | 'nextjs' | 'react-native';
   name: string;

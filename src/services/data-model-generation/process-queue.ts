@@ -53,7 +53,7 @@ export const processDataModelQueue = async (
 
   // Step 1: Get all projects
   const { data: projects, error: projectsError } = await supabase
-    .from('projects')
+    .from('customer_projects')
     .select('id, name');
 
   if (projectsError) {
@@ -68,7 +68,7 @@ export const processDataModelQueue = async (
 
   // Step 2: Get all repos
   const { data: repos, error: reposError } = await supabase
-    .from('project_repos')
+    .from('customer_project_repos')
     .select('id, name');
 
   if (reposError) {

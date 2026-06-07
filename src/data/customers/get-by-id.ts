@@ -1,16 +1,16 @@
 /**
- * Get Customer Project By ID
+ * Get customer by ID
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Project } from './get-all';
+import { Customer } from './get-all';
 
-export const getProjectById = async (
+export const getCustomerById = async (
   supabase: SupabaseClient,
   id: string
-): Promise<Project | null> => {
+): Promise<Customer | null> => {
   const { data, error } = await supabase
-    .from('customer_projects')
+    .from('customers')
     .select('*')
     .eq('id', id)
     .single();
@@ -19,8 +19,8 @@ export const getProjectById = async (
     if (error.code === 'PGRST116') {
       return null;
     }
-    throw new Error(`Failed to fetch customer project: ${error.message}`);
+    throw new Error(`Failed to fetch customer: ${error.message}`);
   }
 
-  return data as Project;
+  return data;
 };

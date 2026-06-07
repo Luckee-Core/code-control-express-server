@@ -32,7 +32,7 @@ export const canProgressToPhase = async (
 ): Promise<{ canProgress: boolean; reason?: string }> => {
   try {
     const { data: project } = await supabase
-      .from('projects')
+      .from('customer_projects')
       .select('app_type')
       .eq('id', projectId)
       .single();

@@ -26,7 +26,7 @@ export const createCrudApiGenerationQueueRouter = (): Router => {
       }
 
       const { data: repo, error: repoError } = await supabase
-        .from('project_repos')
+        .from('customer_project_repos')
         .select('id, project_id')
         .eq('id', repoId)
         .single();

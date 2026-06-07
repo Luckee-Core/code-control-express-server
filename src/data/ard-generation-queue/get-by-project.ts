@@ -1,5 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { ARDGenerationQueue } from '../../db/types';
+import {
+  CUSTOMER_QUEUE_PROJECT_ID_COLUMN,
+  normalizeQueueProjectIds,
+} from '../../utils/queue';
 
 export const getARDQueueByProject = async (
   supabase: SupabaseClient,
@@ -8,7 +12,7 @@ export const getARDQueueByProject = async (
   const { data, error } = await supabase
     .from('ard_generation_queue')
     .select('*')
-    .eq('project_id', projectId)
+    .eq(CUSTOMER_QUEUE_PROJECT_ID_COLUMN, projectId)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -16,5 +20,5 @@ export const getARDQueueByProject = async (
     throw new Error(error.message);
   }
 
-  return data || [];
+  return normalizeQueueProjectIds(data || []);
 };

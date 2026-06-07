@@ -6,7 +6,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { RepoType } from './types';
 
 export type InsertProjectRepoInput = {
-  workspace_id: string;
+  customer_id: string;
   project_id: string;
   repo_type: RepoType;
   name: string;
@@ -19,9 +19,9 @@ export const insertProjectRepo = async (
   input: InsertProjectRepoInput
 ): Promise<{ id: string }> => {
   const { data, error } = await supabase
-    .from('project_repos')
+    .from('customer_project_repos')
     .insert({
-      workspace_id: input.workspace_id,
+      customer_id: input.customer_id,
       project_id: input.project_id,
       repo_type: input.repo_type,
       name: input.name,

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { normalizeQueueProjectIds } from '../../utils/queue';
 
 export type DataModelGenerationQueue = {
   id: string;
@@ -32,5 +33,5 @@ export const getDataModelQueueByRepo = async (
     throw error;
   }
 
-  return data || [];
+  return normalizeQueueProjectIds(data || []);
 };

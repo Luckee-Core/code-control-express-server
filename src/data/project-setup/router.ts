@@ -14,6 +14,7 @@ import {
   type RepoType,
 } from '../project-repos';
 import { createRepoFromTemplate } from '../../services/github';
+import { getGithubOrgOptions, resolveGithubOwner } from '../../utils/github';
 import { generateCode } from './generate-code';
 
 function slugify(name: string): string {
@@ -33,6 +34,34 @@ function parseTemplateEnv(envValue: string | undefined): { owner: string; repo: 
 
 export const createProjectSetupRouter = (): Router => {
   const router = Router({ mergeParams: true });
+
+  router.get('/github-orgs', async (req: Request, res: Response): Promise<void> => {
+    try {
+      const projectId = req.params.id as string;
+      if (!projectId || Array.isArray(projectId)) {
+        res.status(400).json({ success: false, error: 'Invalid project ID' });
+        return;
+      }
+
+      const template = parseTemplateEnv(process.env.GITHUB_TEMPLATE_EXPRESS);
+      if (!template) {
+        res.status(500).json({
+          success: false,
+          error: 'GITHUB_TEMPLATE_EXPRESS is not set (expected owner/repo)',
+        });
+        return;
+      }
+
+      const orgOptions = getGithubOrgOptions(template.owner);
+      res.status(200).json({ success: true, data: orgOptions });
+    } catch (error) {
+      console.error('Error in GET project-setup/github-orgs:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      });
+    }
+  });
 
   router.get('/repos', async (req: Request, res: Response): Promise<void> => {
     try {
@@ -82,9 +111,10 @@ export const createProjectSetupRouter = (): Router => {
         return;
       }
 
-      const body = (req.body as { slug?: string; name?: string }) || {};
+      const body = (req.body as { slug?: string; name?: string; owner?: string }) || {};
       const nameOverride = typeof body.name === 'string' ? body.name.trim() : undefined;
       const slugOverride = typeof body.slug === 'string' ? body.slug.trim() : undefined;
+      const ownerOverride = typeof body.owner === 'string' ? body.owner.trim() : undefined;
       const slug =
         slugOverride !== undefined && slugOverride !== ''
           ? slugify(slugOverride)
@@ -108,7 +138,16 @@ export const createProjectSetupRouter = (): Router => {
         return;
       }
 
-      const newRepoOwner = process.env.GITHUB_OWNER || template.owner;
+      let newRepoOwner: string;
+      try {
+        newRepoOwner = resolveGithubOwner(ownerOverride, template.owner);
+      } catch (ownerError) {
+        res.status(400).json({
+          success: false,
+          error: ownerError instanceof Error ? ownerError.message : 'Invalid GitHub owner',
+        });
+        return;
+      }
 
       const result = await createRepoFromTemplate({
         templateOwner: template.owner,

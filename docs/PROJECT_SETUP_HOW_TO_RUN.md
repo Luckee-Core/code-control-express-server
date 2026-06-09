@@ -40,7 +40,8 @@ All of these are used by **tht-express-server** (the backend). The panel never s
 | **GITHUB_PERSONAL_ACCESS_TOKEN** | Yes | GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic). Create a token with scope **repo** (full). | `ghp_xxxx...` |
 | **GITHUB_TEMPLATE_EXPRESS** | Yes | Your GitHub repo that is the Express template. Format: `owner/repo`. The repo must be marked as a **Template repository** (repo Settings → General → check “Template repository”). | `myorg/express-server-template` |
 | **GITHUB_TEMPLATE_WEB** | Yes | Same idea for the Next.js/web template repo. | `myorg/nextjs-template` |
-| **GITHUB_OWNER** | No | GitHub user or org that will **own** the new repos. If unset, the code uses the template’s owner. Set if the PAT user differs from the desired owner (e.g. PAT is your user but you want new repos under an org). | `myorg` or your username |
+| **GITHUB_OWNER** | No | GitHub user or org that will **own** the new repos by default. If unset, the code uses the template’s owner. Set if the PAT user differs from the desired owner (e.g. PAT is your user but you want new repos under an org). | `myorg` or your username |
+| **GITHUB_ALLOWED_OWNERS** | No | Comma-separated list of GitHub orgs/users allowed when creating repos from the panel. When set, the Repositories tab shows an org dropdown. The request `owner` must be in this list. | `trouthouse-tech,Luckee-Core` |
 | **PROJECT_SETUP_REPO_NAME_WEB** | No | Name pattern for the **web** repo. Use `{slug}` for the project name slug. Default: `{slug}-web`. | `{slug}-web` or `{slug}-seller-web` |
 
 ### Getting the GitHub token
@@ -66,7 +67,8 @@ All of these are used by **tht-express-server** (the backend). The panel never s
 - [ ] Create GitHub PAT with **repo** scope; add as **GITHUB_PERSONAL_ACCESS_TOKEN** in `tht-express-server/.env` (and on Railway if you deploy).
 - [ ] Mark your Express and Web repos as **Template repository** in GitHub.
 - [ ] Set **GITHUB_TEMPLATE_EXPRESS** and **GITHUB_TEMPLATE_WEB** to `owner/repo`.
-- [ ] (Optional) Set **GITHUB_OWNER** if new repos should be under a different user/org.
+- [ ] (Optional) Set **GITHUB_OWNER** if new repos should default to a specific user/org.
+- [ ] (Optional) Set **GITHUB_ALLOWED_OWNERS** (e.g. `trouthouse-tech,Luckee-Core`) to enable org selection in the panel Repositories tab. The PAT must have repo-creation permission in every listed org.
 - [ ] (Optional) Set **PROJECT_SETUP_REPO_NAME_WEB** if you want a different web repo name pattern (e.g. `{slug}-seller-web`).
 - [ ] Restart tht-express-server so it picks up env changes.
 

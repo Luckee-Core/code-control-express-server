@@ -15,6 +15,7 @@ import {
 } from '../project-repos';
 import { createRepoFromTemplate } from '../../services/github';
 import { getGithubOrgOptions, resolveGithubOwner } from '../../utils/github';
+import { parseGithubRepoUrl } from '../../utils/parse-github-repo-url';
 import { generateCode } from './generate-code';
 
 function slugify(name: string): string {
@@ -193,6 +194,81 @@ export const createProjectSetupRouter = (): Router => {
   router.post('/create-web-repo', (req: Request, res: Response): void => {
     const pattern = process.env.PROJECT_SETUP_REPO_NAME_WEB?.trim() || '{slug}-web';
     void handleCreateRepo(req, res, 'nextjs', 'GITHUB_TEMPLATE_WEB', pattern);
+  });
+
+  router.post('/link-existing-repo', async (req: Request, res: Response): Promise<void> => {
+    try {
+      const projectId = req.params.id as string;
+      if (!projectId || Array.isArray(projectId)) {
+        res.status(400).json({ success: false, error: 'Invalid project ID' });
+        return;
+      }
+
+      const body = (req.body as { repo_type?: string; repo_url?: string }) || {};
+      const repoType = body.repo_type;
+      const repoUrlInput = typeof body.repo_url === 'string' ? body.repo_url.trim() : '';
+
+      if (repoType !== 'express' && repoType !== 'nextjs') {
+        res.status(400).json({ success: false, error: 'repo_type must be express or nextjs' });
+        return;
+      }
+
+      if (!repoUrlInput) {
+        res.status(400).json({ success: false, error: 'repo_url is required' });
+        return;
+      }
+
+      const parsed = parseGithubRepoUrl(repoUrlInput);
+      if (!parsed.success) {
+        res.status(400).json({ success: false, error: parsed.error });
+        return;
+      }
+
+      const supabase = getManagedSupabaseClient();
+      const project = await getProjectById(supabase, projectId);
+      if (!project) {
+        res.status(404).json({ success: false, error: 'Project not found' });
+        return;
+      }
+
+      const existing = await getProjectReposByProjectId(supabase, projectId);
+      const already =
+        repoType === 'express'
+          ? existing.find((r) => r.repo_type === 'express')
+          : existing.find(
+              (r) => r.repo_type === 'nextjs' && (r.name === parsed.repo || r.repo_url === parsed.repoUrl)
+            );
+
+      if (already) {
+        res.status(200).json({
+          success: true,
+          already_done: true,
+          repo_url: already.repo_url,
+        });
+        return;
+      }
+
+      await insertProjectRepo(supabase, {
+        customer_id: project.customer_id,
+        project_id: projectId,
+        repo_type: repoType,
+        name: parsed.repo,
+        repo_url: parsed.repoUrl,
+        clone_url: parsed.cloneUrl,
+      });
+
+      res.status(200).json({
+        success: true,
+        repo_url: parsed.repoUrl,
+        clone_url: parsed.cloneUrl,
+      });
+    } catch (error) {
+      console.error('Error in POST project-setup/link-existing-repo:', error);
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      });
+    }
   });
 
   router.post('/generate-code', (req: Request, res: Response): void => {

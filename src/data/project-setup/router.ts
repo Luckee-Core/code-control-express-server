@@ -1,5 +1,5 @@
 /**
- * Project setup router: create repos from template, list repos.
+ * Project setup router: create repos from template, list repos, link existing.
  * Mount at /projects/:id/project-setup (req.params.id = projectId).
  */
 
@@ -8,15 +8,12 @@ import { getManagedSupabaseClient } from '../../db/supabase-client';
 import { getProjectById } from '../projects/get-by-id';
 import {
   getProjectReposByProjectId,
-  getAllProjectRepos,
   insertProjectRepo,
-  updateProjectRepoPhase,
   type RepoType,
 } from '../project-repos';
 import { createRepoFromTemplate } from '../../services/github';
 import { getGithubOrgOptions, resolveGithubOwner } from '../../utils/github';
 import { parseGithubRepoUrl } from '../../utils/parse-github-repo-url';
-import { generateCode } from './generate-code';
 
 function slugify(name: string): string {
   return name
@@ -121,15 +118,12 @@ export const createProjectSetupRouter = (): Router => {
           ? slugify(slugOverride)
           : slugify(project.name) || `project-${projectId.slice(0, 8)}`;
       const newRepoName =
-        repoType === 'nextjs' && nameOverride !== undefined && nameOverride !== ''
+        nameOverride !== undefined && nameOverride !== ''
           ? slugify(nameOverride)
           : namePattern.replace('{slug}', slug);
 
       const existing = await getProjectReposByProjectId(supabase, projectId);
-      const already =
-        repoType === 'nextjs'
-          ? existing.find((r) => r.name === newRepoName)
-          : existing.find((r) => r.repo_type === repoType);
+      const already = existing.find((r) => r.name === newRepoName);
       if (already) {
         res.status(200).json({
           success: true,
@@ -232,12 +226,9 @@ export const createProjectSetupRouter = (): Router => {
       }
 
       const existing = await getProjectReposByProjectId(supabase, projectId);
-      const already =
-        repoType === 'express'
-          ? existing.find((r) => r.repo_type === 'express')
-          : existing.find(
-              (r) => r.repo_type === 'nextjs' && (r.name === parsed.repo || r.repo_url === parsed.repoUrl)
-            );
+      const already = existing.find(
+        (r) => r.name === parsed.repo || r.repo_url === parsed.repoUrl
+      );
 
       if (already) {
         res.status(200).json({
@@ -264,43 +255,6 @@ export const createProjectSetupRouter = (): Router => {
       });
     } catch (error) {
       console.error('Error in POST project-setup/link-existing-repo:', error);
-      res.status(500).json({
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-      });
-    }
-  });
-
-  router.post('/generate-code', (req: Request, res: Response): void => {
-    void generateCode(req, res);
-  });
-
-  router.patch('/repos/:repoId', async (req: Request, res: Response): Promise<void> => {
-    try {
-      const projectId = req.params.id as string;
-      const repoId = req.params.repoId as string;
-      const { current_phase, phase_status } = req.body as {
-        current_phase?: string | null;
-        phase_status?: string | null;
-      };
-      if (!projectId || Array.isArray(projectId) || !repoId || Array.isArray(repoId)) {
-        res.status(400).json({ success: false, error: 'Invalid project ID or repo ID' });
-        return;
-      }
-      const supabase = getManagedSupabaseClient();
-      const repos = await getProjectReposByProjectId(supabase, projectId);
-      const repo = repos.find((r) => r.id === repoId);
-      if (!repo) {
-        res.status(404).json({ success: false, error: 'Repo not found' });
-        return;
-      }
-      const updated = await updateProjectRepoPhase(supabase, repoId, {
-        current_phase,
-        phase_status,
-      });
-      res.status(200).json({ success: true, data: updated });
-    } catch (error) {
-      console.error('Error in PATCH project-setup/repos/:repoId:', error);
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',

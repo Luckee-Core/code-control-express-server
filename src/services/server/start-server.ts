@@ -16,7 +16,7 @@ export const startServer = (app: Express, config: ServerConfig): void => {
   app.listen(port, () => {
     console.log('');
     console.log('='.repeat(50));
-    console.log(`🚀 TroutHouseTech Express Server`);
+    console.log(`🚀 Code Control Express Server`);
     console.log('='.repeat(50));
     console.log(`Environment: ${environment}`);
     console.log(`Port: ${port}`);

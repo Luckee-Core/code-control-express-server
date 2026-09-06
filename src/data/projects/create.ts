@@ -9,7 +9,6 @@ export type CreateProjectInput = {
   customer_id: string;
   name: string;
   description?: string | null;
-  app_type?: string;
 };
 
 export const createProject = async (
@@ -20,7 +19,6 @@ export const createProject = async (
     customer_id: input.customer_id,
     name: input.name.trim(),
     description: input.description?.trim() ?? null,
-    ...(input.app_type && { app_type: input.app_type }),
   };
   const { data, error } = await supabase
     .from('customer_projects')

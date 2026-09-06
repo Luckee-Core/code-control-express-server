@@ -6,8 +6,6 @@ export type ProjectRepo = {
   name: string;
   repo_url: string;
   clone_url: string | null;
-  current_phase: string | null;
-  phase_status: string | null;
   created_at: string;
   updated_at: string;
 };

@@ -21,9 +21,6 @@ app.use('/api/health', createHealthRouter());
 import { createAdminRouter } from './src/data/admin';
 app.use('/api/data', createAdminRouter());
 
-import { createCronRouter } from './src/data/cron';
-app.use('/api/cron', createCronRouter());
-
 import { setupErrorHandling } from './src/services/middleware';
 setupErrorHandling(app);
 

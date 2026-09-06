@@ -1,7 +1,8 @@
 {
   "name": "code-control-express-server",
   "version": "1.0.0",
-  "description": "Code Control Express API — project workspace, schema, and codegen",
+  "description": "Code Control Express API — customers, projects, and GitHub repo setup",
+  "license": "MIT",
   "main": "index.ts",
   "scripts": {
     "start": "ts-node index.ts",

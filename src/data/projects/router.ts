@@ -74,7 +74,7 @@ export const createProjectsRouter = (): Router => {
 
   router.post('/', async (req: Request, res: Response): Promise<void> => {
     try {
-      const { customer_id, name, description, app_type } = req.body;
+      const { customer_id, name, description } = req.body;
       if (!customer_id || !name || typeof name !== 'string' || !name.trim()) {
         res.status(400).json({
           success: false,
@@ -91,7 +91,6 @@ export const createProjectsRouter = (): Router => {
         customer_id,
         name: name.trim(),
         description: description?.trim() ?? null,
-        app_type: app_type && typeof app_type === 'string' ? app_type : undefined,
       });
       res.status(201).json({ success: true, data: project });
     } catch (error) {

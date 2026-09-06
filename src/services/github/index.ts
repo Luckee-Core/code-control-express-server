@@ -1,10 +1,2 @@
-export * from './pr';
-export { getPRDetails } from './pr/get-details';
-export { getPRFiles } from './pr/get-files';
-export { approvePR, rejectPR } from './pr/review';
-export { mergePR } from './pr/merge';
-export type { GetPRDetailsInput, GetPRDetailsResult } from './pr/get-details';
-export type { GetPRFilesInput, GetPRFilesResult } from './pr/get-files';
-export type { MergePRInput, MergePRResult } from './pr/merge';
 export { createRepoFromTemplate } from './create-repo-from-template';
 export type { CreateRepoFromTemplateInput, CreateRepoFromTemplateResult } from './create-repo-from-template';

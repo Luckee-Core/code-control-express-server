@@ -1,6 +1,8 @@
 # Architecture Documentation
 
-ADRs for the **QR Code Express Server** and Express apps in this family.
+ADRs for the **Code Control Express Server**.
+
+> ADR 008 (API docs catalog) is inherited from the Express starter template and is **not implemented** in this slim product. Ignore it unless you add `/api-docs.json`.
 
 ## ADR index
 
@@ -21,4 +23,6 @@ ADRs for the **QR Code Express Server** and Express apps in this family.
 
 ## OSS governance
 
-Pre-release and security review: [mentorai-server `data/open-source/`](https://github.com/trouthouse-tech/mentorai-server/tree/main/data/open-source).
+Pre-release and security review: [mentorai-server `data/open-source/`](https://github.com/Luckee-Core/mentorai-server/blob/main/data/open-source/README.md).
+
+Product docs: [docs/oss/README.md](../../docs/oss/README.md).

@@ -1,1 +1,1 @@
-export * from './router';
+export { createProjectSetupRouter } from './router';

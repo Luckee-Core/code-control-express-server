@@ -2,7 +2,7 @@
  * ProjectRepo type (matches customer_project_repos table)
  */
 
-export type RepoType = 'express' | 'nextjs' | 'react-native';
+export type RepoType = 'express' | 'python' | 'nextjs' | 'react-native';
 
 export type ProjectRepo = {
   id: string;

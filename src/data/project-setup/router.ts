@@ -185,6 +185,10 @@ export const createProjectSetupRouter = (): Router => {
     void handleCreateRepo(req, res, 'express', 'GITHUB_TEMPLATE_EXPRESS', '{slug}-express-server');
   });
 
+  router.post('/create-python-repo', (req: Request, res: Response): void => {
+    void handleCreateRepo(req, res, 'python', 'GITHUB_TEMPLATE_PYTHON', '{slug}-python-server');
+  });
+
   router.post('/create-web-repo', (req: Request, res: Response): void => {
     const pattern = process.env.PROJECT_SETUP_REPO_NAME_WEB?.trim() || '{slug}-web';
     void handleCreateRepo(req, res, 'nextjs', 'GITHUB_TEMPLATE_WEB', pattern);
@@ -202,8 +206,11 @@ export const createProjectSetupRouter = (): Router => {
       const repoType = body.repo_type;
       const repoUrlInput = typeof body.repo_url === 'string' ? body.repo_url.trim() : '';
 
-      if (repoType !== 'express' && repoType !== 'nextjs') {
-        res.status(400).json({ success: false, error: 'repo_type must be express or nextjs' });
+      if (repoType !== 'express' && repoType !== 'python' && repoType !== 'nextjs') {
+        res.status(400).json({
+          success: false,
+          error: 'repo_type must be express, python, or nextjs',
+        });
         return;
       }
 

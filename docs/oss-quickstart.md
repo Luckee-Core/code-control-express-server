@@ -113,18 +113,19 @@ Code Control creates new repos from GitHub **template repositories**.
 
 **Option A — Fork the official repos**
 
-1. Fork [code-control-express-server](https://github.com/Luckee-Core/code-control-express-server) and [code-control](https://github.com/Luckee-Core/code-control) into your org.
+1. Fork [code-control-express-server](https://github.com/Luckee-Core/code-control-express-server), [python-server-template](https://github.com/trouthouse-tech/python-server-template), and [code-control](https://github.com/Luckee-Core/code-control) into your org.
 2. In each fork: **Settings** → **General** → check **Template repository**.
 3. Set in Express `.env`:
 
 ```env
 GITHUB_TEMPLATE_EXPRESS=your-github-org/code-control-express-server
+GITHUB_TEMPLATE_PYTHON=your-github-org/python-server-template
 GITHUB_TEMPLATE_WEB=your-github-org/code-control
 ```
 
 **Option B — Use your own starters**
 
-Mark any Express and Next.js repos as templates, then point the env vars at them.
+Mark any Express, Python, and Next.js repos as templates, then point the env vars at them.
 
 ### 4.3 Environment reference
 
@@ -132,6 +133,7 @@ Mark any Express and Next.js repos as templates, then point the env vars at them
 |----------|------|----------|---------|
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | Express | **Yes** | PAT with `repo` scope |
 | `GITHUB_TEMPLATE_EXPRESS` | Express | **Yes** | `owner/repo` — Express template |
+| `GITHUB_TEMPLATE_PYTHON` | Express | **Yes** | `owner/repo` — Python server template |
 | `GITHUB_TEMPLATE_WEB` | Express | **Yes** | `owner/repo` — web template |
 | `GITHUB_OWNER` | Express | No | Default owner if different from template owner |
 | `GITHUB_ALLOWED_OWNERS` | Express | No | Comma-separated allowlist (server enforces on create) |
@@ -145,6 +147,7 @@ Mark any Express and Next.js repos as templates, then point the env vars at them
 # Express .env
 GITHUB_PERSONAL_ACCESS_TOKEN=ghp_...
 GITHUB_TEMPLATE_EXPRESS=your-github-org/code-control-express-server
+GITHUB_TEMPLATE_PYTHON=your-github-org/python-server-template
 GITHUB_TEMPLATE_WEB=your-github-org/code-control
 ```
 
@@ -173,7 +176,7 @@ If you run multiple orgs, set `NEXT_PUBLIC_GITHUB_ALLOWED_ORGS` in `code-control
 
 1. Open a project → **Repositories**.
 2. If multiple orgs are configured, confirm the org picker appears.
-3. Click **Create Express repo** — verify the repo exists on GitHub and in the UI.
+3. Click **Create** under Servers, choose Express or Python, and verify the repo exists on GitHub and in the UI.
 4. Click **Create Web app** — same check.
 5. Click **Add existing repo** — paste a `https://github.com/owner/repo` URL.
 
@@ -183,7 +186,7 @@ If you run multiple orgs, set `NEXT_PUBLIC_GITHUB_ALLOWED_ORGS` in `code-control
 
 | Symptom | Likely cause |
 |---------|----------------|
-| `GITHUB_TEMPLATE_EXPRESS is not set` | Missing or malformed template env in Express `.env` |
+| `GITHUB_TEMPLATE_EXPRESS is not set` or `GITHUB_TEMPLATE_PYTHON is not set` | Missing or malformed template env in Express `.env` |
 | `GITHUB_PERSONAL_ACCESS_TOKEN is not set` | PAT not set or Express not restarted |
 | `Invalid GitHub owner` | Requested org not in `GITHUB_ALLOWED_OWNERS` |
 | Create fails with 404 from GitHub | Template repo not marked as template, or PAT lacks access |

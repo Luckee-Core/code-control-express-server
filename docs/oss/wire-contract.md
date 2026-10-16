@@ -47,10 +47,12 @@ The web app rewrites `/api/*` to Express via `next.config.ts`. The browser calls
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | **Yes** (for repo creation) | Classic PAT with `repo` scope |
 | `GITHUB_TEMPLATE_EXPRESS` | **Yes** (for Express repo creation) | `owner/repo` — Express template |
 | `GITHUB_TEMPLATE_PYTHON` | **Yes** (for Python repo creation) | `owner/repo` — Python template |
-| `GITHUB_TEMPLATE_WEB` | **Yes** (for repo creation) | `owner/repo` — web template |
+| `GITHUB_TEMPLATE_WEB` | **Yes** (for Next.js repo creation) | `owner/repo` — Next.js web template |
+| `GITHUB_TEMPLATE_REACT_NATIVE` | **Yes** (for React Native repo creation) | `owner/repo` — React Native template |
 | `GITHUB_OWNER` | No | Default owner if different from template owner |
 | `GITHUB_ALLOWED_OWNERS` | No | Comma-separated allowlist for create requests |
 | `PROJECT_SETUP_REPO_NAME_WEB` | No | Web repo name pattern; default `{slug}-web` |
+| `PROJECT_SETUP_REPO_NAME_REACT_NATIVE` | No | React Native repo name pattern; default `{slug}-react-native` |
 
 Full setup walkthrough: [oss-quickstart.md](../oss-quickstart.md#connect-github).
 
@@ -83,7 +85,8 @@ Mounted at `/api/data/projects/:id/project-setup`:
 | GET | `/repos` | Repos linked to this project |
 | POST | `/create-express-repo` | Create Express repo from template |
 | POST | `/create-python-repo` | Create Python repo from template |
-| POST | `/create-web-repo` | Create web repo from template |
+| POST | `/create-web-repo` | Create Next.js web repo from template |
+| POST | `/create-react-native-repo` | Create React Native repo from template |
 | POST | `/link-existing-repo` | Link existing `github.com/owner/repo` |
 
 Aggregator: `src/data/admin/router.ts`.

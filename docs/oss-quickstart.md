@@ -121,11 +121,12 @@ Code Control creates new repos from GitHub **template repositories**.
 GITHUB_TEMPLATE_EXPRESS=your-github-org/code-control-express-server
 GITHUB_TEMPLATE_PYTHON=your-github-org/python-server-template
 GITHUB_TEMPLATE_WEB=your-github-org/code-control
+GITHUB_TEMPLATE_REACT_NATIVE=your-github-org/react-native-template
 ```
 
 **Option B — Use your own starters**
 
-Mark any Express, Python, and Next.js repos as templates, then point the env vars at them.
+Mark any Express, Python, Next.js, and React Native repos as templates, then point the env vars at them.
 
 ### 4.3 Environment reference
 
@@ -134,10 +135,12 @@ Mark any Express, Python, and Next.js repos as templates, then point the env var
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | Express | **Yes** | PAT with `repo` scope |
 | `GITHUB_TEMPLATE_EXPRESS` | Express | **Yes** | `owner/repo` — Express template |
 | `GITHUB_TEMPLATE_PYTHON` | Express | **Yes** | `owner/repo` — Python server template |
-| `GITHUB_TEMPLATE_WEB` | Express | **Yes** | `owner/repo` — web template |
+| `GITHUB_TEMPLATE_WEB` | Express | **Yes** | `owner/repo` — Next.js web template |
+| `GITHUB_TEMPLATE_REACT_NATIVE` | Express | **Yes** | `owner/repo` — React Native template |
 | `GITHUB_OWNER` | Express | No | Default owner if different from template owner |
 | `GITHUB_ALLOWED_OWNERS` | Express | No | Comma-separated allowlist (server enforces on create) |
 | `PROJECT_SETUP_REPO_NAME_WEB` | Express | No | Web repo name pattern; default `{slug}-web` |
+| `PROJECT_SETUP_REPO_NAME_REACT_NATIVE` | Express | No | React Native repo name pattern; default `{slug}-react-native` |
 | `NEXT_PUBLIC_GITHUB_ALLOWED_ORGS` | Web | No | Org radio buttons in Repositories UI |
 | `NEXT_PUBLIC_GITHUB_DEFAULT_ORG` | Web | No | Pre-selected org in UI |
 
@@ -149,6 +152,7 @@ GITHUB_PERSONAL_ACCESS_TOKEN=ghp_...
 GITHUB_TEMPLATE_EXPRESS=your-github-org/code-control-express-server
 GITHUB_TEMPLATE_PYTHON=your-github-org/python-server-template
 GITHUB_TEMPLATE_WEB=your-github-org/code-control
+GITHUB_TEMPLATE_REACT_NATIVE=your-github-org/react-native-template
 ```
 
 New repos are created under the **template owner** unless `GITHUB_OWNER` overrides it.

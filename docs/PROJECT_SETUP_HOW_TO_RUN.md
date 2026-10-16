@@ -27,10 +27,12 @@ Copy `.env.example` to `.env` in **code-control-express-server**.
 | `GITHUB_PERSONAL_ACCESS_TOKEN` | Yes | PAT with **repo** scope |
 | `GITHUB_TEMPLATE_EXPRESS` | Yes | Express template as `owner/repo` (must be a GitHub **Template repository**) |
 | `GITHUB_TEMPLATE_PYTHON` | Yes | Python template as `owner/repo` (must be a GitHub **Template repository**) |
-| `GITHUB_TEMPLATE_WEB` | Yes | Web template as `owner/repo` (template repo) |
+| `GITHUB_TEMPLATE_WEB` | Yes | Next.js web template as `owner/repo` (template repo) |
+| `GITHUB_TEMPLATE_REACT_NATIVE` | Yes | React Native template as `owner/repo` (template repo) |
 | `GITHUB_OWNER` | No | Default owner for new repos if different from template owner |
 | `GITHUB_ALLOWED_OWNERS` | No | Comma-separated allowlist for the org picker in the web UI |
 | `PROJECT_SETUP_REPO_NAME_WEB` | No | Web repo name pattern; default `{slug}-web` |
+| `PROJECT_SETUP_REPO_NAME_REACT_NATIVE` | No | React Native repo name pattern; default `{slug}-react-native` |
 
 ### GitHub PAT
 
@@ -40,8 +42,8 @@ Copy `.env.example` to `.env` in **code-control-express-server**.
 
 ### Template repositories
 
-1. Mark your Express, Python, and Next.js starter repos as **Template repository** (Settings → General).
-2. Set `GITHUB_TEMPLATE_EXPRESS`, `GITHUB_TEMPLATE_PYTHON`, and `GITHUB_TEMPLATE_WEB` to `your-org/repo-name`.
+1. Mark your Express, Python, Next.js, and React Native starter repos as **Template repository** (Settings → General).
+2. Set `GITHUB_TEMPLATE_EXPRESS`, `GITHUB_TEMPLATE_PYTHON`, `GITHUB_TEMPLATE_WEB`, and `GITHUB_TEMPLATE_REACT_NATIVE` to `your-org/repo-name`.
 
 ### Web app org picker (optional)
 
@@ -57,6 +59,6 @@ NEXT_PUBLIC_GITHUB_DEFAULT_ORG=your-org
 - [ ] Migrations applied on a dedicated Supabase project
 - [ ] `GITHUB_PERSONAL_ACCESS_TOKEN` with repo scope
 - [ ] Template repos marked as templates
-- [ ] `GITHUB_TEMPLATE_EXPRESS`, `GITHUB_TEMPLATE_PYTHON`, and `GITHUB_TEMPLATE_WEB` set
+- [ ] `GITHUB_TEMPLATE_EXPRESS`, `GITHUB_TEMPLATE_PYTHON`, `GITHUB_TEMPLATE_WEB`, and `GITHUB_TEMPLATE_REACT_NATIVE` set
 - [ ] Express running on port 3010; web on 3000
-- [ ] Create a customer → project → **Create** under Servers (Express or Python) / **Create Web app** or **Link existing repo**
+- [ ] Create a customer → project → **Create** under Servers (Express or Python) / **Create** under Frontend apps (Next.js or React Native) or **Link existing repo**

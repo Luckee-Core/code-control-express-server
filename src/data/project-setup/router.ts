@@ -194,6 +194,18 @@ export const createProjectSetupRouter = (): Router => {
     void handleCreateRepo(req, res, 'nextjs', 'GITHUB_TEMPLATE_WEB', pattern);
   });
 
+  router.post('/create-react-native-repo', (req: Request, res: Response): void => {
+    const pattern =
+      process.env.PROJECT_SETUP_REPO_NAME_REACT_NATIVE?.trim() || '{slug}-react-native';
+    void handleCreateRepo(
+      req,
+      res,
+      'react-native',
+      'GITHUB_TEMPLATE_REACT_NATIVE',
+      pattern
+    );
+  });
+
   router.post('/link-existing-repo', async (req: Request, res: Response): Promise<void> => {
     try {
       const projectId = req.params.id as string;
@@ -206,10 +218,15 @@ export const createProjectSetupRouter = (): Router => {
       const repoType = body.repo_type;
       const repoUrlInput = typeof body.repo_url === 'string' ? body.repo_url.trim() : '';
 
-      if (repoType !== 'express' && repoType !== 'python' && repoType !== 'nextjs') {
+      if (
+        repoType !== 'express' &&
+        repoType !== 'python' &&
+        repoType !== 'nextjs' &&
+        repoType !== 'react-native'
+      ) {
         res.status(400).json({
           success: false,
-          error: 'repo_type must be express, python, or nextjs',
+          error: 'repo_type must be express, python, nextjs, or react-native',
         });
         return;
       }

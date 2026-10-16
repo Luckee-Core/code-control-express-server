@@ -39,7 +39,8 @@ curl http://localhost:3010/api/health
 | GET | `/api/data/projects/:id/project-setup/github-orgs` | Allowed GitHub orgs |
 | GET | `/api/data/projects/:id/project-setup/repos` | Repos for a project |
 | POST | `/api/data/projects/:id/project-setup/create-express-repo` | Create Express repo from template |
-| POST | `/api/data/projects/:id/project-setup/create-web-repo` | Create web repo from template |
+| POST | `/api/data/projects/:id/project-setup/create-web-repo` | Create Next.js web repo from template |
+| POST | `/api/data/projects/:id/project-setup/create-react-native-repo` | Create React Native repo from template |
 | POST | `/api/data/projects/:id/project-setup/link-existing-repo` | Link existing GitHub repo |
 
 ## GitHub repo creation

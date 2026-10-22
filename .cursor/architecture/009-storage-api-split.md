@@ -1,0 +1,44 @@
+# 009 – Storage / API split
+
+## Status
+
+Accepted
+
+## Context
+
+Code Control's canonical Postgres lives on one host (storage). The API may run on another Mac. Same pattern as Code Commit Summaries ([hub guide](https://github.com/luckee-hub/luckee-hub-express-server/blob/main/data/location_installation/web-express-remote-storage-deployment.md)).
+
+## Decision
+
+| Repo | Role |
+|------|------|
+| `code-generator-storage-server` | Owns Postgres, migrations, and all CRUD SQL. `/api/storage/*` on LAN (default port 3080). |
+| `code-control-express-server` | GitHub, business logic, HTTP API for the web. **No `DATABASE_URL`, no `pg`.** |
+
+### Express data layer
+
+- `src/data/{table}/` stays one function per file, but each function calls storage instead of SQL:
+
+```ts
+export const getProjectById = async (storage: StorageClient, id: string): Promise<Project | null> =>
+  invokeStorageOperation<Project | null>(storage, 'getProjectById', [id]);
+```
+
+- The operation name **is** the storage data function name. Storage builds its whitelist from the exports of its `src/data/*` barrels.
+- `StorageClient` is the managed client: `initializeManagedStorageClient()` at startup, `getManagedStorageClient()` / `requireStorageClient(res)` in handlers (null → `500`), passed into `processX()` and then data functions — same flow as a managed pool.
+- Table folders match table names: `customers/`, `customer-projects/`, `customer-project-repos/`.
+- Row types live in `src/model/`, kept identical in both repos.
+
+### Auth
+
+Header `x-storage-secret`: storage `STORAGE_DISPATCHER_SECRET` = express `STORAGE_EXPRESS_SECRET`. `/api/storage/health` is public; everything else requires the secret.
+
+### Temp migration
+
+Storage: `POST /api/storage/seed/export`, `POST /api/storage/seed/import` (`confirm: REPLACE_STUDIO_CODE_CONTROL`). Express: `POST /api/admin/temp-import-from-laptop-storage` when `TEMP_MIGRATION_ENABLED=true`. See [DEPLOYMENT.md](../../DEPLOYMENT.md). Remove after the studio owns the data.
+
+## Consequences
+
+- Adding CRUD = SQL function in storage `src/data/{table}/` + wrapper in express `src/data/{table}/` with the same name. Deploy storage first; express gets `Unknown operation` otherwise.
+- New tables: migration + seed table list (`seed-table-names.ts`) in storage.
+- Browsers never call storage.

@@ -9,7 +9,8 @@ BEFORE implementing ANY feature, you MUST:
 
 | Path | Purpose |
 |------|---------|
-| **`src/data/{table}/`** | **CRUD only** — one folder per database table, one function per file |
+| **`src/model/{entity}.ts`** | Table row and write-input types (same as storage repo) |
+| **`src/data/{table}/`** | **CRUD only** — one folder per database table, one function per file; each calls Storage Express ([009](./architecture/009-storage-api-split.md)) |
 | **`src/services/{feature}/`** | Routers, handlers, `processX()` action/business logic |
 | **`src/services/middleware`**, **`health`**, **`server`** | Cross-cutting (shipped in starter) |
 | **`src/utils/{feature}/`** | Pure helpers used 2+ times |
@@ -34,16 +35,17 @@ BEFORE implementing ANY feature, you MUST:
 
 ## Data layer (`src/data/{table}/`)
 
-- MUST place **only** database CRUD in `src/data/{table}/` — **one folder per table**.
-- MUST keep **one CRUD function per file** with JSDoc.
+- MUST place **only** CRUD in `src/data/{table}/` — **one folder per table**.
+- MUST keep **one CRUD function per file** with JSDoc. Each takes `StorageClient` first and calls `invokeStorageOperation(storage, '<sameName>', args)`.
+- SQL lives **only** in `code-generator-storage-server/src/data/{table}/` under the same function name. Add it there first.
 - MUST NOT put business rules, HTTP, or orchestration in `src/data/`.
-- NEVER inline queries in handlers or `processX()` — call data functions instead.
+- NEVER call storage directly from handlers or `processX()` — call data functions instead.
 
 ## Managed clients
 
-- MUST use `getManagedPgPool()`; NEVER `new Pool()` in handlers, services, or data code.
-- MUST initialize managed pool once at startup via `initializeManagedPgPool()`; null-check before use → `500`.
-- MUST read `DATABASE_URL` from env (server only — never in `NEXT_PUBLIC_*`).
+- This repo has **no Postgres** (`pg`, `DATABASE_URL`, migrations all live in storage).
+- MUST use `getManagedStorageClient()` / `requireStorageClient(res)`; null → `500`.
+- MUST initialize once at startup via `initializeManagedStorageClient()` (`STORAGE_EXPRESS_URL`, `STORAGE_EXPRESS_SECRET`).
 
 ## Logging
 
@@ -58,3 +60,4 @@ Use emoji prefixes: `🚀` `✅` `❌` `📥` `📤` `🤖` `💾`
 - [005 – Edge functions Railway-only](./architecture/005-edge-functions-railway-only.md)
 - [006 – Logging & error response standards](./architecture/006-logging-and-error-response-standards.md)
 - [007 – Starter template layout](./architecture/007-starter-template-layout.md)
+- [009 – Storage / API split](./architecture/009-storage-api-split.md)

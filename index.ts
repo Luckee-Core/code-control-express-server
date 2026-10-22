@@ -11,15 +11,24 @@ const PORT = Number(process.env.PORT) || 3010;
 import { setupEarlyMiddleware } from './src/services/middleware';
 setupEarlyMiddleware(app);
 
-import { initializeManagedPgPool } from './src/services/managed';
-initializeManagedPgPool();
+import { initializeManagedStorageClient } from './src/services/managed';
+initializeManagedStorageClient();
 
 import { createHealthRouter } from './src/services/health';
 app.use('/', createHealthRouter());
 app.use('/api/health', createHealthRouter());
 
-import { createAdminRouter } from './src/data/admin';
-app.use('/api/data', createAdminRouter());
+import { createCustomersRouter } from './src/services/customers';
+import { createProjectSetupRouter } from './src/services/project-setup';
+import { createProjectsRouter } from './src/services/projects';
+import { createProjectReposRouter } from './src/services/project-repos';
+app.use('/api/data/customers', createCustomersRouter());
+app.use('/api/data/projects/:id/project-setup', createProjectSetupRouter());
+app.use('/api/data/projects', createProjectsRouter());
+app.use('/api/data/project-repos', createProjectReposRouter());
+
+import { createTempMigrationRouter } from './src/services/temp-migration';
+app.use('/api/admin', createTempMigrationRouter());
 
 import { setupErrorHandling } from './src/services/middleware';
 setupErrorHandling(app);

@@ -14,6 +14,7 @@ ADRs for the **Code Control Express Server**.
 6. [006 – Logging & error response standards](./006-logging-and-error-response-standards.md) — Emoji logging, response shape.
 7. [007 – Starter template layout](./007-starter-template-layout.md) — Shipped `src/services/` tree.
 8. [008 – API docs catalog](./008-api-docs-catalog.md) — `GET /api-docs.json`, `GET /docs`, hand-maintained REST catalog.
+9. [009 – Storage / API split](./009-storage-api-split.md) — CRUD via `code-generator-storage-server`; no Postgres in this repo.
 
 ## How to use
 

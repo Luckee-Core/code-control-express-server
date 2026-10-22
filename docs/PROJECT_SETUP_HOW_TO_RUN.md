@@ -6,15 +6,7 @@ What you need so the **Repositories** section on a project can create Express an
 
 ## 1. Database
 
-Run migrations in filename order from `src/db/migrations/`:
-
-1. `000_helpers.sql`
-2. `000a_create_customers.sql`
-3. `001_workspaces_and_projects.sql`
-
-If upgrading from an older Code Control database that had codegen tables, also run `091_drop_codegen.sql`.
-
-See [`src/db/migrations/README.md`](../src/db/migrations/README.md).
+Migrations live in `code-generator-storage-server/migrations/` — run `npm run db:apply-migrations` there on the storage host. Express only needs `STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET`. See [DEPLOYMENT.md](../DEPLOYMENT.md).
 
 ## 2. Environment variables (Express only)
 

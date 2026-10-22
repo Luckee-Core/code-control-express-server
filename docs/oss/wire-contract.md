@@ -89,9 +89,9 @@ Mounted at `/api/data/projects/:id/project-setup`:
 | POST | `/create-react-native-repo` | Create React Native repo from template |
 | POST | `/link-existing-repo` | Link existing `github.com/owner/repo` |
 
-Aggregator: `src/data/admin/router.ts`.
+Routers: `src/services/{customers,projects,project-repos,project-setup}/router.ts`, mounted in `index.ts`.
 
-**Database:** Supabase Postgres — apply `src/db/migrations/*.sql` in filename order. See [migrations README](../../src/db/migrations/README.md).
+**Database:** Express has none. CRUD goes to [`code-generator-storage-server`](https://github.com/Luckee-Core/code-generator-storage-server) (`STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET`), which owns Postgres and `migrations/`. See [DEPLOYMENT.md](../../DEPLOYMENT.md).
 
 ## 4. Setup verification
 
@@ -99,9 +99,8 @@ Aggregator: `src/data/admin/router.ts`.
 
 ```bash
 cp .env.example .env
-# Fill SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+# Fill STORAGE_EXPRESS_URL, STORAGE_EXPRESS_SECRET (storage must be running, migrations applied there)
 # For repo creation: GITHUB_PERSONAL_ACCESS_TOKEN, GITHUB_TEMPLATE_*
-# Apply migrations in src/db/migrations/
 npm install
 npm run dev
 curl http://localhost:3010/api/health

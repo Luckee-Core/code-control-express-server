@@ -1,1 +1,1 @@
-export { getManagedPgPool, initializeManagedPgPool } from '../postgres';
+export { getManagedStorageClient, initializeManagedStorageClient } from '../storage-client';

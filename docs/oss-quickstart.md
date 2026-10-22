@@ -2,7 +2,7 @@
 
 Get Code Control running locally in about 30 minutes. **Studio / local Postgres:** start with [studio-local-postgres-setup.md](./studio-local-postgres-setup.md) (Hub ports 3012 + 3013). This quickstart still covers GitHub org setup below.
 
-Legacy Supabase-only hosting is deprecated for the slim API — use `DATABASE_URL` + `npm run db:apply-migrations` instead.
+> **Database has moved to storage.** This API no longer connects to Postgres or Supabase. Run [`code-generator-storage-server`](https://github.com/Luckee-Core/code-generator-storage-server) (owns Postgres, `migrations/`, `npm run db:apply-migrations`) and set `STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET` here — see [DEPLOYMENT.md](../DEPLOYMENT.md). Sections 2–3 below (Supabase) are outdated; the GitHub org setup further down still applies.
 
 Companion web app: [code-control](https://github.com/Luckee-Core/code-control)
 

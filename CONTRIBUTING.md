@@ -7,9 +7,10 @@ Thank you for contributing to the Code Control open-source pair.
 | Repo | Role |
 |------|------|
 | [code-control](https://github.com/Luckee-Core/code-control) | Next.js web app — customers, projects, repositories |
-| [code-control-express-server](https://github.com/Luckee-Core/code-control-express-server) | Express API backed by Supabase |
+| [code-control-express-server](https://github.com/Luckee-Core/code-control-express-server) | Express API; CRUD via storage |
+| [code-generator-storage-server](https://github.com/Luckee-Core/code-generator-storage-server) | Storage Express — owns Postgres, migrations, CRUD SQL |
 
-Changes that touch API contracts should be coordinated across both repos. See the [wire contract](./docs/oss/wire-contract.md).
+Changes that touch API contracts should be coordinated across repos. See the [wire contract](./docs/oss/wire-contract.md). New CRUD functions go in **both** `src/data/` trees: SQL in storage, a matching `invokeStorageOperation` wrapper in express ([009](./.cursor/architecture/009-storage-api-split.md)).
 
 ## Before you code
 
@@ -19,8 +20,8 @@ Changes that touch API contracts should be coordinated across both repos. See th
 
 ## Development setup
 
-1. Copy `.env.example` to `.env` and fill Supabase + GitHub vars.
-2. Apply SQL migrations from `src/db/migrations/` in filename order.
+1. Run `code-generator-storage-server` (Postgres + `npm run db:apply-migrations` there).
+2. Copy `.env.example` to `.env` and fill storage + GitHub vars.
 3. `npm install` then `npm run dev`.
 4. Verify: `curl http://localhost:3010/api/health`
 

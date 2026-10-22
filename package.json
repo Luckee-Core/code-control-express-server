@@ -8,25 +8,20 @@
     "start": "ts-node index.ts",
     "dev": "nodemon --exec ts-node index.ts",
     "build": "tsc",
-    "build:watch": "tsc --watch",
-    "db:apply-migrations": "ts-node scripts/apply-migrations.ts",
-    "db:import-from-supabase": "ts-node scripts/import-from-supabase.ts"
+    "build:watch": "tsc --watch"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
-    "luxon": "^3.4.4",
-    "pg": "^8.16.3"
+    "luxon": "^3.4.4"
   },
   "devDependencies": {
-    "@supabase/supabase-js": "^2.89.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/luxon": "^3.4.2",
     "@types/node": "^20.0.0",
-    "@types/pg": "^8.15.5",
     "nodemon": "^3.0.0",
     "ts-node": "^10.9.0",
     "typescript": "^5.0.0"

@@ -18,6 +18,6 @@ export const readStorageExpressSecret = (): string | null => {
  * Per-request timeout for storage calls.
  */
 export const readStorageRequestTimeoutMs = (): number => {
-  const parsed = Number(process.env.STORAGE_REQUEST_TIMEOUT_MS?.trim() || 120_000);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
+  const parsed = Number(process.env.STORAGE_REQUEST_TIMEOUT_MS?.trim() || 10_000);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10_000;
 };

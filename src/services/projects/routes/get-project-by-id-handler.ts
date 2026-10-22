@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { requireStorageClient } from '../../../utils/http/require-storage-client';
 import { processGetProject } from '../process-get-project';
 
@@ -23,7 +24,7 @@ export const getProjectByIdHandler = async (req: Request, res: Response): Promis
     }
     res.status(200).json({ success: true, data: project });
   } catch (error) {
-    console.error('❌ Error in GET /api/data/projects/:id:', error);
+    logHandlerError('Error in GET /api/data/projects/:id', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',

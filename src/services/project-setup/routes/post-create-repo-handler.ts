@@ -1,4 +1,5 @@
 import type { Request, RequestHandler, Response } from 'express';
+import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { requireStorageClient } from '../../../utils/http/require-storage-client';
 import { processCreateRepoFromTemplate } from '../process-create-repo-from-template';
 import type { CreateRepoRequestBody, RepoTemplateConfig } from '../types';
@@ -53,7 +54,7 @@ export const createPostCreateRepoHandler =
           return;
       }
     } catch (error) {
-      console.error(`❌ Error in POST project-setup/create-${config.repoType}-repo:`, error);
+      logHandlerError(`Error in POST project-setup/create-${config.repoType}-repo`, error);
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',

@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { requireStorageClient } from '../../../utils/http/require-storage-client';
 import { processDeleteProject } from '../process-delete-project';
 
@@ -20,7 +21,7 @@ export const deleteProjectHandler = async (req: Request, res: Response): Promise
     await processDeleteProject(storage, id);
     res.status(200).json({ success: true });
   } catch (error) {
-    console.error('❌ Error in DELETE /api/data/projects/:id:', error);
+    logHandlerError('Error in DELETE /api/data/projects/:id', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',

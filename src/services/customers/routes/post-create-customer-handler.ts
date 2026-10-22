@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type { CustomerStage } from '../../../model/customer';
+import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { requireStorageClient } from '../../../utils/http/require-storage-client';
 import { processCreateCustomer } from '../process-create-customer';
 
@@ -28,7 +29,7 @@ export const postCreateCustomerHandler = async (req: Request, res: Response): Pr
     console.log('✅ Customer created:', customer.id);
     res.status(201).json({ success: true, data: customer });
   } catch (error) {
-    console.error('❌ Error in POST /api/data/customers:', error);
+    logHandlerError('Error in POST /api/data/customers', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',

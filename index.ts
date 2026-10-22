@@ -12,7 +12,9 @@ import { setupEarlyMiddleware } from './src/services/middleware';
 setupEarlyMiddleware(app);
 
 import { initializeManagedStorageClient } from './src/services/managed';
+import { probeStorage } from './src/services/health/probe-storage';
 initializeManagedStorageClient();
+void probeStorage();
 
 import { createHealthRouter } from './src/services/health';
 app.use('/', createHealthRouter());

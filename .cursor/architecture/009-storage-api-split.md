@@ -37,6 +37,12 @@ Header `x-storage-secret`: storage `STORAGE_DISPATCHER_SECRET` = express `STORAG
 
 Storage: `POST /api/storage/seed/export`, `POST /api/storage/seed/import` (`confirm: REPLACE_STUDIO_CODE_CONTROL`). Express: `POST /api/admin/temp-import-from-laptop-storage` when `TEMP_MIGRATION_ENABLED=true`. See [DEPLOYMENT.md](../../DEPLOYMENT.md). Remove after the studio owns the data.
 
+## Availability
+
+- Express must **start and pass Hub health** when storage is down. `GET /api/health` is **liveness only** (always HTTP 200); `storage` / `database` in the body report dependency state.
+- Storage HTTP calls use `StorageUnavailableError` (`unreachable` | `timeout`) for refused hosts and aborts; data handlers log one line and return 500 with that message.
+- Health probes storage with a **750ms** timeout, **2s** cache, and logs only when reachability changes.
+
 ## Consequences
 
 - Adding CRUD = SQL function in storage `src/data/{table}/` + wrapper in express `src/data/{table}/` with the same name. Deploy storage first; express gets `Unknown operation` otherwise.

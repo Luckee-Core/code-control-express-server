@@ -45,9 +45,12 @@ Start storage, then Express, then the web app.
 
 ## Troubleshooting
 
+`/api/health` on Express always returns **200**; use the body (`storage`, `database`) for readiness. While storage is stopped, the web still loads and shows a banner; `/api/data/*` returns 500 with a clear message. Default storage HTTP timeout from Express is **10s** (`STORAGE_REQUEST_TIMEOUT_MS`).
+
 | Symptom | Fix |
 |---------|-----|
 | `Loading workspace data...` forever | Express down or wrong `CODE_CONTROL_API_URL` |
+| Amber banner, empty lists | Start storage (`code-generator-storage-server`); Hub Run does not start it |
 | `storage: "unconfigured"` | Set `STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET` in Express `.env` |
 | `storage: "error"` | Storage not running / unreachable on that URL |
 | `database: "error"` | Postgres down on the storage host or wrong `DATABASE_URL` in storage `.env` |

@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { processGetHealth } from '../process-get-health';
 
 /**
@@ -7,10 +8,9 @@ import { processGetHealth } from '../process-get-health';
 export const getHealthHandler = async (_req: Request, res: Response): Promise<void> => {
   try {
     const report = await processGetHealth();
-    const unhealthy = report.storage === 'error' || report.database === 'error';
-    res.status(unhealthy ? 503 : 200).json(report);
+    res.status(200).json(report);
   } catch (error) {
-    console.error('❌ Health check failed:', error);
+    logHandlerError('Health check failed', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Health check failed',

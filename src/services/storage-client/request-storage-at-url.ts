@@ -1,4 +1,5 @@
 import { readStorageRequestTimeoutMs } from './config';
+import { StorageUnavailableError } from './storage-unavailable-error';
 import type { StorageEnvelope } from './types';
 
 /**
@@ -11,11 +12,14 @@ export const requestStorageAtUrl = async <T>(
     method?: 'GET' | 'POST';
     body?: unknown;
     secret?: string;
+    timeoutMs?: number;
   } = {},
 ): Promise<T> => {
-  const url = `${baseUrl.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+  const normalizedBase = baseUrl.replace(/\/$/, '');
+  const url = `${normalizedBase}${path.startsWith('/') ? path : `/${path}`}`;
+  const timeoutMs = options.timeoutMs ?? readStorageRequestTimeoutMs();
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), readStorageRequestTimeoutMs());
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (options.secret) {
@@ -32,10 +36,10 @@ export const requestStorageAtUrl = async <T>(
         signal: controller.signal,
       });
     } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      throw new Error(
-        `Storage Express unreachable at ${baseUrl} (${detail}). Start code-generator-storage-server on that host/port.`,
-      );
+      if (controller.signal.aborted) {
+        throw new StorageUnavailableError(normalizedBase, 'timeout', timeoutMs);
+      }
+      throw new StorageUnavailableError(normalizedBase, 'unreachable');
     }
 
     let json: StorageEnvelope<T>;

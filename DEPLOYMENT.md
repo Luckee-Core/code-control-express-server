@@ -116,6 +116,8 @@ The laptop's `code_control` database is now a stale copy. Leave it or drop it on
 
 ## Troubleshooting
 
+Express **`GET /api/health` always returns HTTP 200** (liveness for Luckee Hub). Read `storage` and `database` in the JSON body — `status: degraded` is normal while storage is down. Data routes return **500** until storage is reachable. Default `STORAGE_REQUEST_TIMEOUT_MS` is **10s** (override in express `.env`). Hub **Run** does not start storage; use the Hub project **Start storage** control or `npm run dev` in `code-generator-storage-server`.
+
 | Symptom | Fix |
 |---------|-----|
 | Health `storage: "unconfigured"` | Set `STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET` in express `.env`, restart |

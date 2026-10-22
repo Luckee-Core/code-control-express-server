@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { requireStorageClient } from '../../../utils/http/require-storage-client';
 import { processListProjectSetupRepos } from '../process-list-project-setup-repos';
 
@@ -19,7 +20,7 @@ export const getProjectSetupReposHandler = async (req: Request, res: Response): 
     const repos = await processListProjectSetupRepos(storage, projectId);
     res.status(200).json({ success: true, data: repos, count: repos.length });
   } catch (error) {
-    console.error('❌ Error in GET project-setup/repos:', error);
+    logHandlerError('Error in GET project-setup/repos', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',

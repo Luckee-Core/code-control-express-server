@@ -24,7 +24,7 @@ export const processTempImportFromLaptopStorage = async (): Promise<TempImportRe
   const exportPayload = await requestStorageAtUrl<SeedExportPayload>(
     laptopUrl,
     '/api/storage/seed/export',
-    { method: 'POST', secret },
+    { method: 'POST', secret, timeoutMs: 120_000 },
   );
 
   console.log(`💾 [temp-migration] Importing seed into ${targetUrl}`);
@@ -35,6 +35,7 @@ export const processTempImportFromLaptopStorage = async (): Promise<TempImportRe
     method: 'POST',
     secret,
     body: { ...exportPayload, confirm: REPLACE_CONFIRM },
+    timeoutMs: 120_000,
   });
 
   return {

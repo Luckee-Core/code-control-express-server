@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { requireStorageClient } from '../../../utils/http/require-storage-client';
 import { processCreateProject } from '../process-create-project';
 
@@ -24,7 +25,7 @@ export const postCreateProjectHandler = async (req: Request, res: Response): Pro
     });
     res.status(201).json({ success: true, data: project });
   } catch (error) {
-    console.error('❌ Error in POST /api/data/projects:', error);
+    logHandlerError('Error in POST /api/data/projects', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',

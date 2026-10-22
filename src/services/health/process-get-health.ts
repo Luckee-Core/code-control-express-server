@@ -1,46 +1,29 @@
-import { getManagedStorageClient, requestStorageAtUrl } from '../storage-client';
-
-type ComponentStatus = 'ok' | 'unconfigured' | 'error';
+import { getManagedStorageClient } from '../storage-client';
+import { probeStorage } from './probe-storage';
 
 export type HealthReport = {
   status: 'ok' | 'degraded';
   message: string;
-  storage: ComponentStatus;
+  storage: 'ok' | 'unconfigured' | 'error';
   storageUrl: string | null;
-  database: ComponentStatus;
+  database: 'ok' | 'unconfigured' | 'error';
   timestamp: string;
   environment: string;
 };
 
 /**
- * Checks Storage Express reachability and the canonical Postgres status it reports.
+ * Builds the health report (liveness); storage state comes from probeStorage.
  */
 export const processGetHealth = async (): Promise<HealthReport> => {
   const storageClient = getManagedStorageClient();
-  let storage: ComponentStatus = 'unconfigured';
-  let database: ComponentStatus = 'unconfigured';
-
-  if (storageClient) {
-    try {
-      const data = await requestStorageAtUrl<{ database?: ComponentStatus }>(
-        storageClient.baseUrl,
-        '/api/storage/health',
-      );
-      storage = 'ok';
-      database = data.database ?? 'error';
-    } catch (error) {
-      console.error('❌ Storage Express health check failed:', error);
-      storage = 'error';
-      database = 'error';
-    }
-  }
+  const probe = await probeStorage();
 
   return {
-    status: storage === 'ok' && database === 'ok' ? 'ok' : 'degraded',
+    status: probe.storage === 'ok' && probe.database === 'ok' ? 'ok' : 'degraded',
     message: 'Code Control Express Server is running',
-    storage,
+    storage: probe.storage,
     storageUrl: storageClient?.baseUrl ?? null,
-    database,
+    database: probe.database,
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
   };

@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import type { RepoType } from '../../../model/project-repo';
+import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { requireStorageClient } from '../../../utils/http/require-storage-client';
 import { parseGithubRepoUrl } from '../../../utils/parse-github-repo-url';
 import { processLinkExistingRepo } from '../process-link-existing-repo';
@@ -65,7 +66,7 @@ export const postLinkExistingRepoHandler = async (req: Request, res: Response): 
         return;
     }
   } catch (error) {
-    console.error('❌ Error in POST project-setup/link-existing-repo:', error);
+    logHandlerError('Error in POST project-setup/link-existing-repo', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',

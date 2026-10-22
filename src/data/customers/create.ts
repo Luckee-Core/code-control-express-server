@@ -2,7 +2,7 @@
  * Create a customer
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { Pool } from 'pg';
 import type { Customer } from './get-all';
 
 export type CreateCustomerInput = {
@@ -15,22 +15,24 @@ export type CreateCustomerInput = {
  * Inserts a customer row. Defaults stage to discovery_call when omitted.
  */
 export const createCustomer = async (
-  supabase: SupabaseClient,
+  pool: Pool,
   input: CreateCustomerInput
 ): Promise<Customer> => {
-  const { data, error } = await supabase
-    .from('customers')
-    .insert({
-      name: input.name.trim(),
-      description: input.description?.trim() ?? null,
-      stage: input.stage ?? 'discovery_call',
-    })
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error(`Failed to create customer: ${error.message}`);
+  const stage = input.stage ?? 'discovery_call';
+  try {
+    const result = await pool.query<Customer>(
+      `INSERT INTO customers (name, description, stage)
+       VALUES ($1, $2, $3::customer_stage)
+       RETURNING *`,
+      [input.name.trim(), input.description?.trim() ?? null, stage]
+    );
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('Insert returned no row');
+    }
+    return row;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to create customer: ${message}`);
   }
-
-  return data as Customer;
 };

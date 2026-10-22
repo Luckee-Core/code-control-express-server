@@ -2,22 +2,24 @@
  * Get all repos for a customer project
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
-import { ProjectRepo } from './types';
+import type { Pool } from 'pg';
+import type { ProjectRepo } from './types';
 
+/**
+ * Loads repos for one project ordered by repo_type.
+ */
 export const getProjectReposByProjectId = async (
-  supabase: SupabaseClient,
+  pool: Pool,
   projectId: string
 ): Promise<ProjectRepo[]> => {
-  const { data, error } = await supabase
-    .from('customer_project_repos')
-    .select('*')
-    .eq('project_id', projectId)
-    .order('repo_type', { ascending: true });
-
-  if (error) {
-    throw new Error(`Failed to fetch customer project repos: ${error.message}`);
+  try {
+    const result = await pool.query<ProjectRepo>(
+      `SELECT * FROM customer_project_repos WHERE project_id = $1 ORDER BY repo_type ASC`,
+      [projectId]
+    );
+    return result.rows;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to fetch customer project repos: ${message}`);
   }
-
-  return (data || []) as ProjectRepo[];
 };

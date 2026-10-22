@@ -3,7 +3,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { getManagedSupabaseClient } from '../../db/supabase-client';
+import { requirePgPool } from '../../utils/http/require-pg-pool';
 import { getAllCustomers, getCustomerById, createCustomer } from './index';
 
 /**
@@ -14,15 +14,13 @@ export const createCustomersRouter = (): Router => {
 
   router.get('/', async (req: Request, res: Response): Promise<void> => {
     try {
-      const supabase = getManagedSupabaseClient();
-      if (!supabase) {
-        res.status(500).json({ success: false, error: 'Service unavailable' });
-        return;
-      }
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
       const params = {
         stage: req.query.stage as string | undefined,
       };
-      const customers = await getAllCustomers(supabase, params);
+      const customers = await getAllCustomers(pool, params);
       res.status(200).json({
         success: true,
         data: customers,
@@ -44,13 +42,11 @@ export const createCustomersRouter = (): Router => {
         res.status(400).json({ success: false, error: 'name is required' });
         return;
       }
-      const supabase = getManagedSupabaseClient();
-      if (!supabase) {
-        res.status(500).json({ success: false, error: 'Service unavailable' });
-        return;
-      }
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
       console.log('📥 POST /api/data/customers');
-      const customer = await createCustomer(supabase, {
+      const customer = await createCustomer(pool, {
         name: name.trim(),
         description: typeof description === 'string' ? description.trim() : null,
         stage:
@@ -76,12 +72,10 @@ export const createCustomersRouter = (): Router => {
         res.status(400).json({ success: false, error: 'Invalid customer ID' });
         return;
       }
-      const supabase = getManagedSupabaseClient();
-      if (!supabase) {
-        res.status(500).json({ success: false, error: 'Service unavailable' });
-        return;
-      }
-      const customer = await getCustomerById(supabase, id);
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      const customer = await getCustomerById(pool, id);
       if (!customer) {
         res.status(404).json({ success: false, error: 'Customer not found' });
         return;

@@ -1,6 +1,8 @@
 # Code Control — OSS quickstart
 
-Get Code Control running locally in about 30 minutes. You will set up Supabase first, then connect **your GitHub org** for repository creation.
+Get Code Control running locally in about 30 minutes. **Studio / local Postgres:** start with [studio-local-postgres-setup.md](./studio-local-postgres-setup.md) (Hub ports 3012 + 3013). This quickstart still covers GitHub org setup below.
+
+Legacy Supabase-only hosting is deprecated for the slim API — use `DATABASE_URL` + `npm run db:apply-migrations` instead.
 
 Companion web app: [code-control](https://github.com/Luckee-Core/code-control)
 

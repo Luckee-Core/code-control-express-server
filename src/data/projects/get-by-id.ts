@@ -2,25 +2,20 @@
  * Get Customer Project By ID
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Project } from './get-all';
+import type { Pool } from 'pg';
+import type { Project } from './get-all';
 
-export const getProjectById = async (
-  supabase: SupabaseClient,
-  id: string
-): Promise<Project | null> => {
-  const { data, error } = await supabase
-    .from('customer_projects')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return null;
-    }
-    throw new Error(`Failed to fetch customer project: ${error.message}`);
+/**
+ * Loads one project by primary key.
+ */
+export const getProjectById = async (pool: Pool, id: string): Promise<Project | null> => {
+  try {
+    const result = await pool.query<Project>(`SELECT * FROM customer_projects WHERE id = $1`, [
+      id,
+    ]);
+    return result.rows[0] ?? null;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to fetch customer project: ${message}`);
   }
-
-  return data as Project;
 };

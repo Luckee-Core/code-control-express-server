@@ -39,11 +39,11 @@ BEFORE implementing ANY feature, you MUST:
 - MUST NOT put business rules, HTTP, or orchestration in `src/data/`.
 - NEVER inline queries in handlers or `processX()` — call data functions instead.
 
-## Managed clients & edge
+## Managed clients
 
-- MUST use `getManagedSupabaseClient()` / `getManagedAnthropicClient()` when added; NEVER `createClient()` in handlers, services, or data code.
-- MUST initialize managed clients once at startup; null-check before use → `500`.
-- Supabase edge functions MUST ONLY call Railway endpoints.
+- MUST use `getManagedPgPool()`; NEVER `new Pool()` in handlers, services, or data code.
+- MUST initialize managed pool once at startup via `initializeManagedPgPool()`; null-check before use → `500`.
+- MUST read `DATABASE_URL` from env (server only — never in `NEXT_PUBLIC_*`).
 
 ## Logging
 

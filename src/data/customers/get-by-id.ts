@@ -2,25 +2,21 @@
  * Get customer by ID
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Customer } from './get-all';
+import type { Pool } from 'pg';
+import type { Customer } from './get-all';
 
+/**
+ * Loads one customer by primary key.
+ */
 export const getCustomerById = async (
-  supabase: SupabaseClient,
+  pool: Pool,
   id: string
 ): Promise<Customer | null> => {
-  const { data, error } = await supabase
-    .from('customers')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return null;
-    }
-    throw new Error(`Failed to fetch customer: ${error.message}`);
+  try {
+    const result = await pool.query<Customer>(`SELECT * FROM customers WHERE id = $1`, [id]);
+    return result.rows[0] ?? null;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to fetch customer: ${message}`);
   }
-
-  return data;
 };

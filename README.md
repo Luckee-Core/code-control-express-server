@@ -8,7 +8,9 @@ Default port **3010**.
 
 ## Before you start
 
-**You need:** a Supabase project, a GitHub PAT, and two template repos in **your** GitHub org.
+**You need:** local Postgres (`DATABASE_URL`), a GitHub PAT, and template repos in **your** GitHub org.
+
+**Studio / Hub:** [docs/studio-local-postgres-setup.md](docs/studio-local-postgres-setup.md) (ports 3012 API, 3013 web).
 
 See [docs/oss-quickstart.md](docs/oss-quickstart.md) → [Connect your GitHub org](docs/oss-quickstart.md#connect-github).
 
@@ -20,7 +22,13 @@ npm install
 npm run dev
 ```
 
-Apply SQL migrations in order — see [`src/db/migrations/README.md`](src/db/migrations/README.md).
+```bash
+createdb code_control
+npm run db:apply-migrations
+# optional: npm run db:import-from-supabase
+```
+
+See [`src/db/migrations/README.md`](src/db/migrations/README.md) and [studio setup](docs/studio-local-postgres-setup.md).
 
 ```bash
 curl http://localhost:3010/api/health
@@ -49,7 +57,8 @@ See [docs/oss-quickstart.md](docs/oss-quickstart.md) for the full walkthrough, o
 
 ## Docs
 
-- [OSS quickstart](docs/oss-quickstart.md) — Supabase + env + GitHub org setup
+- [Studio local Postgres](docs/studio-local-postgres-setup.md) — **start here on your studio Mac**
+- [OSS quickstart](docs/oss-quickstart.md) — env + GitHub org setup
 - [Wire contract](docs/oss/wire-contract.md) — pairing with the web app
 - [SECURITY.md](SECURITY.md) — threat model (no API auth by default)
 

@@ -3,7 +3,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { getManagedSupabaseClient } from '../../db/supabase-client';
+import { requirePgPool } from '../../utils/http/require-pg-pool';
 import {
   getAllProjects,
   getProjectsByCustomerId,
@@ -13,13 +13,18 @@ import {
   deleteProject,
 } from './index';
 
+/**
+ * Creates the projects data router.
+ */
 export const createProjectsRouter = (): Router => {
   const router = Router();
 
   router.get('/', async (_req: Request, res: Response): Promise<void> => {
     try {
-      const supabase = getManagedSupabaseClient();
-      const projects = await getAllProjects(supabase);
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      const projects = await getAllProjects(pool);
       res.status(200).json({ success: true, data: projects, count: projects.length });
     } catch (error) {
       console.error('Error in GET /api/data/projects:', error);
@@ -37,8 +42,10 @@ export const createProjectsRouter = (): Router => {
         res.status(400).json({ success: false, error: 'Invalid customer ID' });
         return;
       }
-      const supabase = getManagedSupabaseClient();
-      const projects = await getProjectsByCustomerId(supabase, customerId);
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      const projects = await getProjectsByCustomerId(pool, customerId);
       res.status(200).json({ success: true, data: projects, count: projects.length });
     } catch (error) {
       console.error('Error in GET /api/data/projects/customer/:customerId:', error);
@@ -56,8 +63,10 @@ export const createProjectsRouter = (): Router => {
         res.status(400).json({ success: false, error: 'Invalid customer project ID' });
         return;
       }
-      const supabase = getManagedSupabaseClient();
-      const project = await getProjectById(supabase, id);
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      const project = await getProjectById(pool, id);
       if (!project) {
         res.status(404).json({ success: false, error: 'Customer project not found' });
         return;
@@ -82,12 +91,10 @@ export const createProjectsRouter = (): Router => {
         });
         return;
       }
-      const supabase = getManagedSupabaseClient();
-      if (!supabase) {
-        res.status(500).json({ success: false, error: 'Service unavailable' });
-        return;
-      }
-      const project = await createProject(supabase, {
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      const project = await createProject(pool, {
         customer_id,
         name: name.trim(),
         description: description?.trim() ?? null,
@@ -110,8 +117,10 @@ export const createProjectsRouter = (): Router => {
         return;
       }
       const { name, description } = req.body;
-      const supabase = getManagedSupabaseClient();
-      const project = await updateProject(supabase, id, {
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      const project = await updateProject(pool, id, {
         ...(name !== undefined && { name }),
         ...(description !== undefined && { description }),
       });
@@ -132,8 +141,10 @@ export const createProjectsRouter = (): Router => {
         res.status(400).json({ success: false, error: 'Invalid customer project ID' });
         return;
       }
-      const supabase = getManagedSupabaseClient();
-      await deleteProject(supabase, id);
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      await deleteProject(pool, id);
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error in DELETE /api/data/projects/:id:', error);

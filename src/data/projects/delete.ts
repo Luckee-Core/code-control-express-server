@@ -2,18 +2,19 @@
  * Delete Customer Project
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { Pool } from 'pg';
 
-export const deleteProject = async (
-  supabase: SupabaseClient,
-  id: string
-): Promise<void> => {
-  const { error } = await supabase
-    .from('customer_projects')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    throw new Error(`Failed to delete customer project: ${error.message}`);
+/**
+ * Deletes a customer_projects row by id.
+ */
+export const deleteProject = async (pool: Pool, id: string): Promise<void> => {
+  try {
+    const result = await pool.query(`DELETE FROM customer_projects WHERE id = $1`, [id]);
+    if ((result.rowCount ?? 0) === 0) {
+      throw new Error('Customer project not found');
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to delete customer project: ${message}`);
   }
 };

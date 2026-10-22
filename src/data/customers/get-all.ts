@@ -2,7 +2,7 @@
  * Get all customers, optionally filtered by stage
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
+import type { Pool } from 'pg';
 
 export type Customer = {
   id: string;
@@ -17,24 +17,28 @@ export type GetAllCustomersParams = {
   stage?: string;
 };
 
+/**
+ * Loads customers ordered by created_at descending.
+ */
 export const getAllCustomers = async (
-  supabase: SupabaseClient,
+  pool: Pool,
   params?: GetAllCustomersParams
 ): Promise<Customer[]> => {
-  let query = supabase
-    .from('customers')
-    .select('*')
-    .order('created_at', { ascending: false });
+  try {
+    if (params?.stage) {
+      const result = await pool.query<Customer>(
+        `SELECT * FROM customers WHERE stage = $1::customer_stage ORDER BY created_at DESC`,
+        [params.stage]
+      );
+      return result.rows;
+    }
 
-  if (params?.stage) {
-    query = query.eq('stage', params.stage);
+    const result = await pool.query<Customer>(
+      `SELECT * FROM customers ORDER BY created_at DESC`
+    );
+    return result.rows;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to fetch customers: ${message}`);
   }
-
-  const { data, error } = await query;
-
-  if (error) {
-    throw new Error(`Failed to fetch customers: ${error.message}`);
-  }
-
-  return data || [];
 };

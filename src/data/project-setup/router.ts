@@ -4,7 +4,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { getManagedSupabaseClient } from '../../db/supabase-client';
+import { requirePgPool } from '../../utils/http/require-pg-pool';
 import { getProjectById } from '../projects/get-by-id';
 import {
   getProjectReposByProjectId,
@@ -68,8 +68,10 @@ export const createProjectSetupRouter = (): Router => {
         res.status(400).json({ success: false, error: 'Invalid project ID' });
         return;
       }
-      const supabase = getManagedSupabaseClient();
-      const repos = await getProjectReposByProjectId(supabase, projectId);
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      const repos = await getProjectReposByProjectId(pool, projectId);
       res.status(200).json({ success: true, data: repos, count: repos.length });
     } catch (error) {
       console.error('Error in GET project-setup/repos:', error);
@@ -93,8 +95,10 @@ export const createProjectSetupRouter = (): Router => {
         res.status(400).json({ success: false, error: 'Invalid project ID' });
         return;
       }
-      const supabase = getManagedSupabaseClient();
-      const project = await getProjectById(supabase, projectId);
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      const project = await getProjectById(pool, projectId);
       if (!project) {
         res.status(404).json({ success: false, error: 'Project not found' });
         return;
@@ -122,7 +126,7 @@ export const createProjectSetupRouter = (): Router => {
           ? slugify(nameOverride)
           : namePattern.replace('{slug}', slug);
 
-      const existing = await getProjectReposByProjectId(supabase, projectId);
+      const existing = await getProjectReposByProjectId(pool, projectId);
       const already = existing.find((r) => r.name === newRepoName);
       if (already) {
         res.status(200).json({
@@ -158,7 +162,7 @@ export const createProjectSetupRouter = (): Router => {
         return;
       }
 
-      await insertProjectRepo(supabase, {
+      await insertProjectRepo(pool, {
         customer_id: project.customer_id,
         project_id: projectId,
         repo_type: repoType,
@@ -242,14 +246,16 @@ export const createProjectSetupRouter = (): Router => {
         return;
       }
 
-      const supabase = getManagedSupabaseClient();
-      const project = await getProjectById(supabase, projectId);
+      const pool = requirePgPool(res);
+      if (!pool) return;
+
+      const project = await getProjectById(pool, projectId);
       if (!project) {
         res.status(404).json({ success: false, error: 'Project not found' });
         return;
       }
 
-      const existing = await getProjectReposByProjectId(supabase, projectId);
+      const existing = await getProjectReposByProjectId(pool, projectId);
       const already = existing.find(
         (r) => r.name === parsed.repo || r.repo_url === parsed.repoUrl
       );
@@ -263,7 +269,7 @@ export const createProjectSetupRouter = (): Router => {
         return;
       }
 
-      await insertProjectRepo(supabase, {
+      await insertProjectRepo(pool, {
         customer_id: project.customer_id,
         project_id: projectId,
         repo_type: repoType,

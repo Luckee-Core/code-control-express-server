@@ -11,8 +11,8 @@ const PORT = Number(process.env.PORT) || 3010;
 import { setupEarlyMiddleware } from './src/services/middleware';
 setupEarlyMiddleware(app);
 
-import { initializeManagedSupabaseClient } from './src/services/managed';
-initializeManagedSupabaseClient();
+import { initializeManagedPgPool } from './src/services/managed';
+initializeManagedPgPool();
 
 import { createHealthRouter } from './src/services/health';
 app.use('/', createHealthRouter());

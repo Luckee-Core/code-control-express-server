@@ -14,6 +14,7 @@
   },
   "include": [
     "index.ts",
+    "scripts/**/*",
     "src/**/*"
   ],
   "exclude": [

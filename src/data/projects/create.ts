@@ -2,8 +2,8 @@
  * Create Customer Project
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
-import { Project } from './get-all';
+import type { Pool } from 'pg';
+import type { Project } from './get-all';
 
 export type CreateProjectInput = {
   customer_id: string;
@@ -11,24 +11,24 @@ export type CreateProjectInput = {
   description?: string | null;
 };
 
-export const createProject = async (
-  supabase: SupabaseClient,
-  input: CreateProjectInput
-): Promise<Project> => {
-  const row: Record<string, unknown> = {
-    customer_id: input.customer_id,
-    name: input.name.trim(),
-    description: input.description?.trim() ?? null,
-  };
-  const { data, error } = await supabase
-    .from('customer_projects')
-    .insert(row)
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error(`Failed to create customer project: ${error.message}`);
+/**
+ * Inserts a customer_projects row.
+ */
+export const createProject = async (pool: Pool, input: CreateProjectInput): Promise<Project> => {
+  try {
+    const result = await pool.query<Project>(
+      `INSERT INTO customer_projects (customer_id, name, description)
+       VALUES ($1, $2, $3)
+       RETURNING *`,
+      [input.customer_id, input.name.trim(), input.description?.trim() ?? null]
+    );
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('Insert returned no row');
+    }
+    return row;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to create customer project: ${message}`);
   }
-
-  return data as Project;
 };

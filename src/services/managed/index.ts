@@ -1,4 +1,1 @@
-export {
-  getManagedSupabaseClient,
-  initializeManagedSupabaseClient,
-} from './supabase';
+export { getManagedPgPool, initializeManagedPgPool } from '../postgres';

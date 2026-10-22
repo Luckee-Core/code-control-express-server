@@ -2,8 +2,8 @@
  * Insert a customer project repo (after creating from GitHub template)
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
-import { RepoType } from './types';
+import type { Pool } from 'pg';
+import type { RepoType } from './types';
 
 export type InsertProjectRepoInput = {
   customer_id: string;
@@ -14,26 +14,35 @@ export type InsertProjectRepoInput = {
   clone_url?: string | null;
 };
 
+/**
+ * Inserts a customer_project_repos row.
+ */
 export const insertProjectRepo = async (
-  supabase: SupabaseClient,
+  pool: Pool,
   input: InsertProjectRepoInput
 ): Promise<{ id: string }> => {
-  const { data, error } = await supabase
-    .from('customer_project_repos')
-    .insert({
-      customer_id: input.customer_id,
-      project_id: input.project_id,
-      repo_type: input.repo_type,
-      name: input.name,
-      repo_url: input.repo_url,
-      clone_url: input.clone_url ?? null,
-    })
-    .select('id')
-    .single();
-
-  if (error) {
-    throw new Error(`Failed to insert customer project repo: ${error.message}`);
+  try {
+    const result = await pool.query<{ id: string }>(
+      `INSERT INTO customer_project_repos (
+         customer_id, project_id, repo_type, name, repo_url, clone_url
+       ) VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id`,
+      [
+        input.customer_id,
+        input.project_id,
+        input.repo_type,
+        input.name,
+        input.repo_url,
+        input.clone_url ?? null,
+      ]
+    );
+    const row = result.rows[0];
+    if (!row) {
+      throw new Error('Insert returned no row');
+    }
+    return row;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to insert customer project repo: ${message}`);
   }
-
-  return { id: data.id };
 };

@@ -8,7 +8,7 @@ Code Control runs as three processes. Postgres belongs to **storage**, not this 
 | Express API | `code-control-express-server` | **3012** | GitHub repo setup, HTTP API for the web; CRUD via storage |
 | Next.js app | `code-control` | **3013** | UI; proxies `/api/*` to Express |
 
-Full laptop/studio topology and the laptop → studio data move: [DEPLOYMENT.md](../DEPLOYMENT.md).
+Full laptop → studio **one-time data migration**: [CODE-CONTROL-STUDIO-DATA-MIGRATION.md](../../../on-device-dispatcher/on-device-dispatcher-express-server/docs/CODE-CONTROL-STUDIO-DATA-MIGRATION.md) (on-device dispatcher repo). Steady-state deployment: [DEPLOYMENT.md](../DEPLOYMENT.md).
 
 ## Storage host
 

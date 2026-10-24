@@ -27,7 +27,7 @@ curl -s http://127.0.0.1:3080/api/storage/health
 
 ```bash
 cd code-control-express-server
-cp .env.example .env    # STORAGE_EXPRESS_URL, STORAGE_EXPRESS_SECRET, PORT=3012, GITHUB_*
+cp .env.example .env    # CODE_CONTROL_STORAGE_URL, CODE_CONTROL_STORAGE_SECRET, PORT=3012, GITHUB_*
 npm install
 npm run dev
 curl -s http://127.0.0.1:3012/api/health
@@ -51,7 +51,7 @@ Start storage, then Express, then the web app.
 |---------|-----|
 | `Loading workspace data...` forever | Express down or wrong `CODE_CONTROL_API_URL` |
 | Amber banner, empty lists | Start storage (`code-generator-storage-server`); Hub Run does not start it |
-| `storage: "unconfigured"` | Set `STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET` in Express `.env` |
+| `storage: "unconfigured"` | Set `CODE_CONTROL_STORAGE_URL` + `CODE_CONTROL_STORAGE_SECRET` (or gateway vars) in Express `.env` |
 | `storage: "error"` | Storage not running / unreachable on that URL |
 | `database: "error"` | Postgres down on the storage host or wrong `DATABASE_URL` in storage `.env` |
 | Import fails on FK | Run `npm run db:apply-migrations` in storage first |

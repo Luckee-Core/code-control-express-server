@@ -26,7 +26,7 @@ Browser ──► code-control (Next) ──► code-control-express-server ─�
 | Host | File | Variable |
 |------|------|----------|
 | Storage host | `code-generator-storage-server/.env` | `STORAGE_DISPATCHER_SECRET` |
-| Express host | `code-control-express-server/.env` | `STORAGE_EXPRESS_SECRET` (same value) |
+| Express host (studio direct) | `code-control-express-server/.env` | `CODE_CONTROL_STORAGE_SECRET` (same value) |
 
 ## More detail
 
@@ -40,7 +40,7 @@ Express **`GET /api/health` always returns HTTP 200**. Use `storage` and `databa
 
 | Symptom | Fix |
 |---------|-----|
-| Health `storage: "unconfigured"` | `STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET` in express `.env` |
+| Health `storage: "unconfigured"` | Direct: `CODE_CONTROL_STORAGE_URL` + `CODE_CONTROL_STORAGE_SECRET`. Gateway: `MAIN_GATEWAY_URL` + `DISPATCHER_GATE_SECRET` |
 | Health `storage: "error"` | Storage down, wrong IP, `STORAGE_BIND_HOST=127.0.0.1`, or firewall |
 | `Unauthorized` | Secret mismatch between storage and express |
 | `database: "error"` | Postgres down or wrong `DATABASE_URL` on storage host |

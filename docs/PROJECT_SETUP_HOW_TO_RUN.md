@@ -6,7 +6,7 @@ What you need so the **Repositories** section on a project can create Express an
 
 ## 1. Database
 
-Migrations live in `code-generator-storage-server/migrations/` — run `npm run db:apply-migrations` there on the storage host. Express only needs `STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET`. See [DEPLOYMENT.md](../DEPLOYMENT.md).
+Migrations live in `code-generator-storage-server/migrations/` — run `npm run db:apply-migrations` there on the storage host. Express only needs `CODE_CONTROL_STORAGE_URL` + `CODE_CONTROL_STORAGE_SECRET`. See [DEPLOYMENT.md](../DEPLOYMENT.md).
 
 ## 2. Environment variables (Express only)
 

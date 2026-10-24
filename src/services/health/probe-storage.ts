@@ -59,7 +59,11 @@ export const probeStorage = async (): Promise<StorageProbe> => {
       const data = await requestStorageAtUrl<{ database?: ComponentStatus }>(
         client.baseUrl,
         '/api/storage/health',
-        { secret: client.secret, timeoutMs: HEALTH_PROBE_TIMEOUT_MS },
+        {
+          secret: client.secret,
+          gateSecret: client.gateSecret,
+          timeoutMs: HEALTH_PROBE_TIMEOUT_MS,
+        },
       );
       const probe: StorageProbe = {
         storage: 'ok',

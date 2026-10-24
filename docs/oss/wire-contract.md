@@ -91,7 +91,7 @@ Mounted at `/api/data/projects/:id/project-setup`:
 
 Routers: `src/services/{customers,projects,project-repos,project-setup}/router.ts`, mounted in `index.ts`.
 
-**Database:** Express has none. CRUD goes to [`code-generator-storage-server`](https://github.com/Luckee-Core/code-generator-storage-server) (`STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET`), which owns Postgres and `migrations/`. See [DEPLOYMENT.md](../../DEPLOYMENT.md).
+**Database:** Express has none. CRUD goes to [`code-generator-storage-server`](https://github.com/Luckee-Core/code-generator-storage-server) (`CODE_CONTROL_STORAGE_URL` + `CODE_CONTROL_STORAGE_SECRET`), which owns Postgres and `migrations/`. See [DEPLOYMENT.md](../../DEPLOYMENT.md).
 
 ## 4. Setup verification
 
@@ -99,7 +99,7 @@ Routers: `src/services/{customers,projects,project-repos,project-setup}/router.t
 
 ```bash
 cp .env.example .env
-# Fill STORAGE_EXPRESS_URL, STORAGE_EXPRESS_SECRET (storage must be running, migrations applied there)
+# Fill CODE_CONTROL_STORAGE_URL, CODE_CONTROL_STORAGE_SECRET (storage must be running, migrations applied there)
 # For repo creation: GITHUB_PERSONAL_ACCESS_TOKEN, GITHUB_TEMPLATE_*
 npm install
 npm run dev

@@ -32,6 +32,9 @@ app.use('/api/data/project-repos', createProjectReposRouter());
 import { createTempMigrationRouter } from './src/services/temp-migration';
 app.use('/api/admin', createTempMigrationRouter());
 
+import { createStudioSeedRouter } from './src/services/studio-seed';
+app.use('/api/studio-seed', createStudioSeedRouter());
+
 import { setupErrorHandling } from './src/services/middleware';
 setupErrorHandling(app);
 

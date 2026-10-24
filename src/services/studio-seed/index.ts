@@ -1,0 +1,1 @@
+export { createStudioSeedRouter } from './router';

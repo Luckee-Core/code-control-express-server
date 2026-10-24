@@ -31,7 +31,7 @@ export const getProjectById = async (storage: StorageClient, id: string): Promis
 
 ### Auth
 
-Header `x-storage-secret`: storage `STORAGE_DISPATCHER_SECRET` = express `STORAGE_EXPRESS_SECRET`. `/api/storage/health` is public; everything else requires the secret.
+Header `x-storage-secret`: storage `STORAGE_DISPATCHER_SECRET` = express `CODE_CONTROL_STORAGE_SECRET` (direct mode only). Gateway mode: express sends `DISPATCHER_GATE_SECRET`; project dispatcher injects storage secret. `/api/storage/health` is public; everything else requires the secret on direct calls.
 
 ### Temp migration
 

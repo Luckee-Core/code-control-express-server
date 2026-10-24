@@ -11,7 +11,8 @@ export const requestStorageAtUrl = async <T>(
   options: {
     method?: 'GET' | 'POST';
     body?: unknown;
-    secret?: string;
+    secret?: string | null;
+    gateSecret?: string | null;
     timeoutMs?: number;
   } = {},
 ): Promise<T> => {
@@ -22,8 +23,11 @@ export const requestStorageAtUrl = async <T>(
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (options.secret) {
-    headers['x-storage-secret'] = options.secret;
+  if (options.secret?.trim()) {
+    headers['x-storage-secret'] = options.secret.trim();
+  }
+  if (options.gateSecret) {
+    headers['x-dispatcher-gate-secret'] = options.gateSecret;
   }
 
   try {

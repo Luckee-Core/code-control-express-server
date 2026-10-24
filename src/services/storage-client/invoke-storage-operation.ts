@@ -12,5 +12,6 @@ export const invokeStorageOperation = async <T>(
   requestStorageAtUrl<T>(storage.baseUrl, '/api/storage/v1/invoke', {
     method: 'POST',
     secret: storage.secret,
+    gateSecret: storage.gateSecret,
     body: { operation, args },
   });

@@ -10,7 +10,8 @@ export const requireStorageClient = (res: Response): StorageClient | null => {
     console.error('❌ Storage Express client unavailable');
     res.status(500).json({
       success: false,
-      error: 'Storage Express not configured (set STORAGE_EXPRESS_URL and STORAGE_EXPRESS_SECRET)',
+      error:
+        'Canonical data not configured (direct: CODE_CONTROL_STORAGE_URL + CODE_CONTROL_STORAGE_SECRET; gateway: MAIN_GATEWAY_URL + DISPATCHER_GATE_SECRET)',
     });
     return null;
   }

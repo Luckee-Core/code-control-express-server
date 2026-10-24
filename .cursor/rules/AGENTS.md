@@ -45,7 +45,7 @@ BEFORE implementing ANY feature, you MUST:
 
 - This repo has **no Postgres** (`pg`, `DATABASE_URL`, migrations all live in storage).
 - MUST use `getManagedStorageClient()` / `requireStorageClient(res)`; null → `500`.
-- MUST initialize once at startup via `initializeManagedStorageClient()` (`STORAGE_EXPRESS_URL`, `STORAGE_EXPRESS_SECRET`).
+- MUST initialize once at startup via `initializeManagedStorageClient()` (`CODE_CONTROL_STORAGE_*` or `MAIN_GATEWAY_URL` + `DISPATCHER_GATE_SECRET`).
 
 ## Logging
 

@@ -10,7 +10,7 @@ Default port **3010**.
 
 **You need:** a running [`code-generator-storage-server`](../code-generator-storage-server) (owns Postgres), a GitHub PAT, and template repos in **your** GitHub org.
 
-This API has **no database connection**. CRUD in `src/data/` calls storage over HTTP (`STORAGE_EXPRESS_URL` + `STORAGE_EXPRESS_SECRET`). Laptop/studio layout: [DEPLOYMENT.md](DEPLOYMENT.md).
+This API has **no database connection**. CRUD uses `CODE_CONTROL_STORAGE_*` (studio) or `MAIN_GATEWAY_URL` + `DISPATCHER_GATE_SECRET` (laptop). See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 **Studio / Hub:** [docs/studio-local-postgres-setup.md](docs/studio-local-postgres-setup.md) (ports 3080 storage, 3012 API, 3013 web).
 
@@ -21,7 +21,7 @@ See [docs/oss-quickstart.md](docs/oss-quickstart.md) → [Connect your GitHub or
 Start storage first (migrations live there), then:
 
 ```bash
-cp .env.example .env    # STORAGE_EXPRESS_URL, STORAGE_EXPRESS_SECRET, GITHUB_*
+cp .env.example .env    # CODE_CONTROL_STORAGE_* or MAIN_GATEWAY_URL, GITHUB_*
 npm install
 npm run dev
 curl http://localhost:3010/api/health   # storage: "ok", database: "ok"
@@ -45,6 +45,7 @@ curl http://localhost:3010/api/health   # storage: "ok", database: "ok"
 | POST | `/api/data/projects/:id/project-setup/create-web-repo` | Create Next.js web repo from template |
 | POST | `/api/data/projects/:id/project-setup/create-react-native-repo` | Create React Native repo from template |
 | POST | `/api/data/projects/:id/project-setup/link-existing-repo` | Link existing GitHub repo |
+| POST | `/api/studio-seed/import-to-local` | Export from configured canonical base URL → `STORAGE_IMPORT_TARGET_URL` (default `http://127.0.0.1:3080`) |
 | POST | `/api/admin/temp-import-from-laptop-storage` | Temp laptop → studio copy (only when `TEMP_MIGRATION_ENABLED=true`) |
 
 ## GitHub repo creation

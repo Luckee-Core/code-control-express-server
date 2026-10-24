@@ -1,14 +1,14 @@
 import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processUpdateProject } from '../process-update-project';
 
 /**
  * Handles PATCH /api/data/projects/:id.
  */
 export const patchUpdateProjectHandler = async (req: Request, res: Response): Promise<void> => {
-  const storage = requireStorageClient(res);
-  if (!storage) return;
+  const client = requireDataClient(res);
+  if (!client) return;
 
   const { id } = req.params;
   if (!id || Array.isArray(id)) {
@@ -19,7 +19,7 @@ export const patchUpdateProjectHandler = async (req: Request, res: Response): Pr
 
   console.log('📥 PATCH /api/data/projects/:id', { id });
   try {
-    const project = await processUpdateProject(storage, id, {
+    const project = await processUpdateProject(client, id, {
       ...(name !== undefined && { name }),
       ...(description !== undefined && { description }),
     });

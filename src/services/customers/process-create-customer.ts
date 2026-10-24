@@ -1,11 +1,11 @@
 import { createCustomer } from '../../data/customers';
 import type { CreateCustomerInput, Customer } from '../../model/customer';
-import type { StorageClient } from '../storage-client';
+import type { CanonicalDataClient } from '../canonical-data-client';
 
 /**
  * Creates a customer for POST /api/data/customers.
  */
 export const processCreateCustomer = async (
-  storage: StorageClient,
+  client: CanonicalDataClient,
   input: CreateCustomerInput
-): Promise<Customer> => createCustomer(storage, input);
+): Promise<Customer> => createCustomer(client, input);

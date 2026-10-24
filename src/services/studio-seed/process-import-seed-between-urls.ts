@@ -1,4 +1,4 @@
-import { readCanonicalDataRequestSecret, requestStorageAtUrl } from '../storage-client';
+import { readCanonicalDataRequestSecret, requestAtAbsoluteUrl } from '../canonical-data-client';
 import type { SeedExportPayload, TempImportResult } from '../temp-migration/types';
 
 const REPLACE_CONFIRM = 'REPLACE_STUDIO_CODE_CONTROL';
@@ -6,34 +6,34 @@ const REPLACE_CONFIRM = 'REPLACE_STUDIO_CODE_CONTROL';
 const normalizeUrl = (url: string): string => url.replace(/\/$/, '');
 
 /**
- * Exports seed tables from source storage and replaces target storage tables (one transaction on target).
+ * Exports seed tables from source backend and replaces target tables (studio-only direct secret).
  */
-export const processImportSeedBetweenStorages = async (
+export const processImportSeedBetweenUrls = async (
   sourceUrl: string,
   targetUrl: string,
 ): Promise<TempImportResult> => {
   const secret = readCanonicalDataRequestSecret();
   if (!secret) {
-    throw new Error('CODE_CONTROL_STORAGE_SECRET is required for direct storage import');
+    throw new Error('CODE_CONTROL_DIRECT_SECRET is required for seed import');
   }
   const from = normalizeUrl(sourceUrl);
   const to = normalizeUrl(targetUrl);
   if (!from || !to) {
-    throw new Error('Source and target storage URLs are required');
+    throw new Error('Source and target URLs are required');
   }
   if (from === to) {
-    throw new Error('Source and target storage URLs must be different');
+    throw new Error('Source and target URLs must be different');
   }
 
-  console.log(`📥 [storage-seed-import] Exporting seed from ${from}`);
-  const exportPayload = await requestStorageAtUrl<SeedExportPayload>(from, '/api/storage/seed/export', {
+  console.log(`📥 [studio-seed] Exporting seed from ${from}`);
+  const exportPayload = await requestAtAbsoluteUrl<SeedExportPayload>(from, '/api/storage/seed/export', {
     method: 'POST',
     secret,
     timeoutMs: 120_000,
   });
 
-  console.log(`💾 [storage-seed-import] Importing seed into ${to}`);
-  const importResult = await requestStorageAtUrl<{
+  console.log(`💾 [studio-seed] Importing seed into ${to}`);
+  const importResult = await requestAtAbsoluteUrl<{
     importedAt: string;
     tableRowCounts: Record<string, number>;
   }>(to, '/api/storage/seed/import', {

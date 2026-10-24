@@ -1,14 +1,14 @@
 import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processListProjectSetupRepos } from '../process-list-project-setup-repos';
 
 /**
  * Handles GET /api/data/projects/:id/project-setup/repos.
  */
 export const getProjectSetupReposHandler = async (req: Request, res: Response): Promise<void> => {
-  const storage = requireStorageClient(res);
-  if (!storage) return;
+  const client = requireDataClient(res);
+  if (!client) return;
 
   const projectId = req.params.id;
   if (!projectId || Array.isArray(projectId)) {
@@ -17,7 +17,7 @@ export const getProjectSetupReposHandler = async (req: Request, res: Response): 
   }
 
   try {
-    const repos = await processListProjectSetupRepos(storage, projectId);
+    const repos = await processListProjectSetupRepos(client, projectId);
     res.status(200).json({ success: true, data: repos, count: repos.length });
   } catch (error) {
     logHandlerError('Error in GET project-setup/repos', error);

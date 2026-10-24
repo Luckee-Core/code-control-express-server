@@ -1,14 +1,14 @@
 import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processListCustomerProjects } from '../process-list-customer-projects';
 
 /**
  * Handles GET /api/data/projects/customer/:customerId.
  */
 export const getCustomerProjectsHandler = async (req: Request, res: Response): Promise<void> => {
-  const storage = requireStorageClient(res);
-  if (!storage) return;
+  const client = requireDataClient(res);
+  if (!client) return;
 
   const { customerId } = req.params;
   if (!customerId || Array.isArray(customerId)) {
@@ -17,7 +17,7 @@ export const getCustomerProjectsHandler = async (req: Request, res: Response): P
   }
 
   try {
-    const projects = await processListCustomerProjects(storage, customerId);
+    const projects = await processListCustomerProjects(client, customerId);
     res.status(200).json({ success: true, data: projects, count: projects.length });
   } catch (error) {
     logHandlerError('Error in GET /api/data/projects/customer/:customerId', error);

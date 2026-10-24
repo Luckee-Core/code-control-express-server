@@ -1,14 +1,14 @@
 import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processGetProject } from '../process-get-project';
 
 /**
  * Handles GET /api/data/projects/:id.
  */
 export const getProjectByIdHandler = async (req: Request, res: Response): Promise<void> => {
-  const storage = requireStorageClient(res);
-  if (!storage) return;
+  const client = requireDataClient(res);
+  if (!client) return;
 
   const { id } = req.params;
   if (!id || Array.isArray(id)) {
@@ -17,7 +17,7 @@ export const getProjectByIdHandler = async (req: Request, res: Response): Promis
   }
 
   try {
-    const project = await processGetProject(storage, id);
+    const project = await processGetProject(client, id);
     if (!project) {
       res.status(404).json({ success: false, error: 'Customer project not found' });
       return;

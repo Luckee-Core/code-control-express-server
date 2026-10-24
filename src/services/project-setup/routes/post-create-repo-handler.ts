@@ -1,6 +1,6 @@
 import type { Request, RequestHandler, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processCreateRepoFromTemplate } from '../process-create-repo-from-template';
 import type { CreateRepoRequestBody, RepoTemplateConfig } from '../types';
 
@@ -13,8 +13,8 @@ const readOptionalString = (value: unknown): string | undefined =>
 export const createPostCreateRepoHandler =
   (config: RepoTemplateConfig): RequestHandler =>
   async (req: Request, res: Response): Promise<void> => {
-    const storage = requireStorageClient(res);
-    if (!storage) return;
+    const client = requireDataClient(res);
+    if (!client) return;
 
     const projectId = req.params.id;
     if (!projectId || Array.isArray(projectId)) {
@@ -31,7 +31,7 @@ export const createPostCreateRepoHandler =
 
     console.log(`📥 POST project-setup/create-${config.repoType}-repo`, { projectId });
     try {
-      const result = await processCreateRepoFromTemplate({ storage, projectId, config, body });
+      const result = await processCreateRepoFromTemplate({ client, projectId, config, body });
       switch (result.kind) {
         case 'project_not_found':
           res.status(404).json({ success: false, error: 'Project not found' });

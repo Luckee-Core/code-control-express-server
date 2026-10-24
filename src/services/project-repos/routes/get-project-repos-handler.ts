@@ -1,17 +1,17 @@
 import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processListProjectRepos } from '../process-list-project-repos';
 
 /**
  * Handles GET /api/data/project-repos.
  */
 export const getProjectReposHandler = async (_req: Request, res: Response): Promise<void> => {
-  const storage = requireStorageClient(res);
-  if (!storage) return;
+  const client = requireDataClient(res);
+  if (!client) return;
 
   try {
-    const repos = await processListProjectRepos(storage);
+    const repos = await processListProjectRepos(client);
     res.status(200).json({ success: true, data: repos, count: repos.length });
   } catch (error) {
     logHandlerError('Error in GET /api/data/project-repos', error);

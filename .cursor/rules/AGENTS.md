@@ -10,7 +10,7 @@ BEFORE implementing ANY feature, you MUST:
 | Path | Purpose |
 |------|---------|
 | **`src/model/{entity}.ts`** | Table row and write-input types (same as storage repo) |
-| **`src/data/{table}/`** | **CRUD only** — one folder per database table, one function per file; each calls Storage Express ([009](./architecture/009-storage-api-split.md)) |
+| **`src/data/{table}/`** | **CRUD only** — one folder per table; each calls `invokeCanonicalDataOperation` via `canonical-data-client` ([009](./architecture/009-storage-api-split.md)) |
 | **`src/services/{feature}/`** | Routers, handlers, `processX()` action/business logic |
 | **`src/services/middleware`**, **`health`**, **`server`** | Cross-cutting (shipped in starter) |
 | **`src/utils/{feature}/`** | Pure helpers used 2+ times |
@@ -36,7 +36,7 @@ BEFORE implementing ANY feature, you MUST:
 ## Data layer (`src/data/{table}/`)
 
 - MUST place **only** CRUD in `src/data/{table}/` — **one folder per table**.
-- MUST keep **one CRUD function per file** with JSDoc. Each takes `StorageClient` first and calls `invokeStorageOperation(storage, '<sameName>', args)`.
+- MUST keep **one CRUD function per file** with JSDoc. Each takes `CanonicalDataClient` first and calls `invokeCanonicalDataOperation(client, '<sameName>', args)`.
 - SQL lives **only** in `code-generator-storage-server/src/data/{table}/` under the same function name. Add it there first.
 - MUST NOT put business rules, HTTP, or orchestration in `src/data/`.
 - NEVER call storage directly from handlers or `processX()` — call data functions instead.
@@ -44,8 +44,8 @@ BEFORE implementing ANY feature, you MUST:
 ## Managed clients
 
 - This repo has **no Postgres** (`pg`, `DATABASE_URL`, migrations all live in storage).
-- MUST use `getManagedStorageClient()` / `requireStorageClient(res)`; null → `500`.
-- MUST initialize once at startup via `initializeManagedStorageClient()` (`CODE_CONTROL_STORAGE_*` or `MAIN_GATEWAY_URL` + `DISPATCHER_GATE_SECRET`).
+- MUST use `getManagedCanonicalDataClient()` / `requireDataClient(res)`; null → `500`.
+- MUST initialize once at startup via `initializeManagedCanonicalDataClient()` (gateway: `MAIN_GATEWAY_*` + `DISPATCHER_GATE_SECRET`; studio direct: `CODE_CONTROL_DIRECT_*`).
 
 ## Logging
 

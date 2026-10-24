@@ -1,14 +1,14 @@
 import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processDeleteProject } from '../process-delete-project';
 
 /**
  * Handles DELETE /api/data/projects/:id.
  */
 export const deleteProjectHandler = async (req: Request, res: Response): Promise<void> => {
-  const storage = requireStorageClient(res);
-  if (!storage) return;
+  const client = requireDataClient(res);
+  if (!client) return;
 
   const { id } = req.params;
   if (!id || Array.isArray(id)) {
@@ -18,7 +18,7 @@ export const deleteProjectHandler = async (req: Request, res: Response): Promise
 
   console.log('📥 DELETE /api/data/projects/:id', { id });
   try {
-    await processDeleteProject(storage, id);
+    await processDeleteProject(client, id);
     res.status(200).json({ success: true });
   } catch (error) {
     logHandlerError('Error in DELETE /api/data/projects/:id', error);

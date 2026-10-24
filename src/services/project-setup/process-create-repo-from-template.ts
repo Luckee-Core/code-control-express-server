@@ -2,7 +2,7 @@ import { getProjectById } from '../../data/customer-projects';
 import { getProjectReposByProjectId, insertProjectRepo } from '../../data/customer-project-repos';
 import { parseTemplateEnv, resolveGithubOwner } from '../../utils/github';
 import { createRepoFromTemplate } from '../github';
-import type { StorageClient } from '../storage-client';
+import type { CanonicalDataClient } from '../canonical-data-client';
 import { slugifyRepoName } from './slugify-repo-name';
 import type { CreateRepoFromTemplateResult, CreateRepoRequestBody, RepoTemplateConfig } from './types';
 
@@ -11,14 +11,14 @@ import type { CreateRepoFromTemplateResult, CreateRepoRequestBody, RepoTemplateC
  * Idempotent by repo name: returns already_done when the project already has it.
  */
 export const processCreateRepoFromTemplate = async (input: {
-  storage: StorageClient;
+  client: CanonicalDataClient;
   projectId: string;
   config: RepoTemplateConfig;
   body: CreateRepoRequestBody;
 }): Promise<CreateRepoFromTemplateResult> => {
-  const { storage, projectId, config, body } = input;
+  const { client, projectId, config, body } = input;
 
-  const project = await getProjectById(storage, projectId);
+  const project = await getProjectById(client, projectId);
   if (!project) {
     return { kind: 'project_not_found' };
   }
@@ -40,7 +40,7 @@ export const processCreateRepoFromTemplate = async (input: {
     ? slugifyRepoName(nameOverride)
     : config.readNamePattern().replace('{slug}', slug);
 
-  const existing = await getProjectReposByProjectId(storage, projectId);
+  const existing = await getProjectReposByProjectId(client, projectId);
   const already = existing.find((r) => r.name === newRepoName);
   if (already) {
     return { kind: 'already_done', repo_url: already.repo_url };
@@ -69,7 +69,7 @@ export const processCreateRepoFromTemplate = async (input: {
     return { kind: 'invalid_request', error: result.error };
   }
 
-  await insertProjectRepo(storage, {
+  await insertProjectRepo(client, {
     customer_id: project.customer_id,
     project_id: projectId,
     repo_type: config.repoType,

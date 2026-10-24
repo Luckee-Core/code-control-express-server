@@ -1,11 +1,11 @@
 import type { Customer } from '../../model/customer';
-import { invokeStorageOperation, type StorageClient } from '../../services/storage-client';
+import { invokeCanonicalDataOperation, type CanonicalDataClient } from '../../services/canonical-data-client';
 
 /**
  * Loads one customer by primary key from Storage Express.
  */
 export const getCustomerById = async (
-  storage: StorageClient,
+  client: CanonicalDataClient,
   id: string
 ): Promise<Customer | null> =>
-  invokeStorageOperation<Customer | null>(storage, 'getCustomerById', [id]);
+  invokeCanonicalDataOperation<Customer | null>(client, 'getCustomerById', [id]);

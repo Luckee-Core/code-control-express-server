@@ -1,10 +1,10 @@
 import type { CreateProjectInput, Project } from '../../model/project';
-import { invokeStorageOperation, type StorageClient } from '../../services/storage-client';
+import { invokeCanonicalDataOperation, type CanonicalDataClient } from '../../services/canonical-data-client';
 
 /**
  * Inserts a customer_projects row via Storage Express.
  */
 export const createProject = async (
-  storage: StorageClient,
+  client: CanonicalDataClient,
   input: CreateProjectInput
-): Promise<Project> => invokeStorageOperation<Project>(storage, 'createProject', [input]);
+): Promise<Project> => invokeCanonicalDataOperation<Project>(client, 'createProject', [input]);

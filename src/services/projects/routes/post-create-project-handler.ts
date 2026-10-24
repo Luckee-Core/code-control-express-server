@@ -1,14 +1,14 @@
 import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processCreateProject } from '../process-create-project';
 
 /**
  * Handles POST /api/data/projects.
  */
 export const postCreateProjectHandler = async (req: Request, res: Response): Promise<void> => {
-  const storage = requireStorageClient(res);
-  if (!storage) return;
+  const client = requireDataClient(res);
+  if (!client) return;
 
   const { customer_id, name, description } = req.body ?? {};
   if (!customer_id || !name || typeof name !== 'string' || !name.trim()) {
@@ -18,7 +18,7 @@ export const postCreateProjectHandler = async (req: Request, res: Response): Pro
 
   console.log('📥 POST /api/data/projects');
   try {
-    const project = await processCreateProject(storage, {
+    const project = await processCreateProject(client, {
       customer_id,
       name: name.trim(),
       description: typeof description === 'string' ? description.trim() : null,

@@ -1,14 +1,14 @@
 import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processGetCustomer } from '../process-get-customer';
 
 /**
  * Handles GET /api/data/customers/:id.
  */
 export const getCustomerByIdHandler = async (req: Request, res: Response): Promise<void> => {
-  const storage = requireStorageClient(res);
-  if (!storage) return;
+  const client = requireDataClient(res);
+  if (!client) return;
 
   const { id } = req.params;
   if (!id || Array.isArray(id)) {
@@ -17,7 +17,7 @@ export const getCustomerByIdHandler = async (req: Request, res: Response): Promi
   }
 
   try {
-    const customer = await processGetCustomer(storage, id);
+    const customer = await processGetCustomer(client, id);
     if (!customer) {
       res.status(404).json({ success: false, error: 'Customer not found' });
       return;

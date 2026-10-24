@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import type { RepoType } from '../../../model/project-repo';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { requireStorageClient } from '../../../utils/http/require-storage-client';
+import { requireDataClient } from '../../../utils/http/require-data-client';
 import { parseGithubRepoUrl } from '../../../utils/parse-github-repo-url';
 import { processLinkExistingRepo } from '../process-link-existing-repo';
 
@@ -11,8 +11,8 @@ const REPO_TYPES: RepoType[] = ['express', 'python', 'nextjs', 'react-native'];
  * Handles POST /api/data/projects/:id/project-setup/link-existing-repo.
  */
 export const postLinkExistingRepoHandler = async (req: Request, res: Response): Promise<void> => {
-  const storage = requireStorageClient(res);
-  if (!storage) return;
+  const client = requireDataClient(res);
+  if (!client) return;
 
   const projectId = req.params.id;
   if (!projectId || Array.isArray(projectId)) {
@@ -45,7 +45,7 @@ export const postLinkExistingRepoHandler = async (req: Request, res: Response): 
   console.log('📥 POST project-setup/link-existing-repo', { projectId, repoType });
   try {
     const result = await processLinkExistingRepo({
-      storage,
+      client,
       projectId,
       repoType,
       repo: { name: parsed.repo, repoUrl: parsed.repoUrl, cloneUrl: parsed.cloneUrl },

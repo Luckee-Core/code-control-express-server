@@ -1,11 +1,11 @@
 import type { ProjectRepo } from '../../model/project-repo';
-import { invokeStorageOperation, type StorageClient } from '../../services/storage-client';
+import { invokeCanonicalDataOperation, type CanonicalDataClient } from '../../services/canonical-data-client';
 
 /**
  * Loads repos for one project (ordered by repo_type) from Storage Express.
  */
 export const getProjectReposByProjectId = async (
-  storage: StorageClient,
+  client: CanonicalDataClient,
   projectId: string
 ): Promise<ProjectRepo[]> =>
-  invokeStorageOperation<ProjectRepo[]>(storage, 'getProjectReposByProjectId', [projectId]);
+  invokeCanonicalDataOperation<ProjectRepo[]>(client, 'getProjectReposByProjectId', [projectId]);

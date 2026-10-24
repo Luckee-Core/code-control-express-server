@@ -1,1 +1,4 @@
-export { getManagedStorageClient, initializeManagedStorageClient } from '../storage-client';
+export {
+  getManagedCanonicalDataClient,
+  initializeManagedCanonicalDataClient,
+} from '../canonical-data-client';

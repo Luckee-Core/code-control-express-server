@@ -1,8 +1,8 @@
 import type { Project } from '../../model/project';
-import { invokeStorageOperation, type StorageClient } from '../../services/storage-client';
+import { invokeCanonicalDataOperation, type CanonicalDataClient } from '../../services/canonical-data-client';
 
 /**
  * Loads all customer projects (most recently updated first) from Storage Express.
  */
-export const getAllProjects = async (storage: StorageClient): Promise<Project[]> =>
-  invokeStorageOperation<Project[]>(storage, 'getAllProjects');
+export const getAllProjects = async (client: CanonicalDataClient): Promise<Project[]> =>
+  invokeCanonicalDataOperation<Project[]>(client, 'getAllProjects');

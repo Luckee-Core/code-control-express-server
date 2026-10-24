@@ -1,10 +1,8 @@
-import { StorageUnavailableError } from '../../services/storage-client';
-
 /**
- * One line for storage outages; full error (stack) for anything unexpected.
+ * Logs handler failures (message only for known Error; full value otherwise).
  */
 export const logHandlerError = (label: string, error: unknown): void => {
-  if (error instanceof StorageUnavailableError) {
+  if (error instanceof Error) {
     console.error(`❌ ${label}: ${error.message}`);
     return;
   }

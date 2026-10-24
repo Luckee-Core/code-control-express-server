@@ -11,10 +11,10 @@ const PORT = Number(process.env.PORT) || 3010;
 import { setupEarlyMiddleware } from './src/services/middleware';
 setupEarlyMiddleware(app);
 
-import { initializeManagedStorageClient } from './src/services/managed';
-import { probeStorage } from './src/services/health/probe-storage';
-initializeManagedStorageClient();
-void probeStorage();
+import { initializeManagedCanonicalDataClient } from './src/services/managed';
+import { probeCanonicalData } from './src/services/health/probe-canonical-data';
+initializeManagedCanonicalDataClient();
+void probeCanonicalData();
 
 import { createHealthRouter } from './src/services/health';
 app.use('/', createHealthRouter());

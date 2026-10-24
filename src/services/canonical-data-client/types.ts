@@ -1,0 +1,19 @@
+export type CanonicalDataAccessMode = 'direct' | 'gateway';
+
+export type CanonicalDataClient = {
+  accessMode: CanonicalDataAccessMode;
+  /** Main gateway origin, e.g. `http://10.0.0.28:3010` (gateway mode). */
+  gatewayUrl: string | null;
+  /** Gateway catalog project id (`MAIN_GATEWAY_PROJECT_ID`). */
+  gatewayProjectId: string | null;
+  /** Studio-only direct backend origin (`CODE_CONTROL_DIRECT_URL`). */
+  directUrl: string | null;
+  secret: string | null;
+  gateSecret: string | null;
+};
+
+export type CanonicalDataEnvelope<T> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+};

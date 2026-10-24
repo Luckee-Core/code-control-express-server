@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
-import { processImportSeedToLocalStorage } from '../process-import-seed-to-local-storage';
+import { processImportSeedToLocal } from '../process-import-seed-to-local';
 
 /**
  * Handles POST /api/studio-seed/import-to-local.
@@ -8,7 +8,7 @@ import { processImportSeedToLocalStorage } from '../process-import-seed-to-local
 export const postImportToLocalHandler = async (_req: Request, res: Response): Promise<void> => {
   console.log('📥 POST /api/studio-seed/import-to-local');
   try {
-    const data = await processImportSeedToLocalStorage();
+    const data = await processImportSeedToLocal();
     console.log('📤 200 POST /api/studio-seed/import-to-local', data.tableRowCounts);
     res.status(200).json({ success: true, data });
   } catch (error) {

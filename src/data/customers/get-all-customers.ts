@@ -1,10 +1,10 @@
 import type { Customer, GetAllCustomersParams } from '../../model/customer';
-import { invokeStorageOperation, type StorageClient } from '../../services/storage-client';
+import { invokeCanonicalDataOperation, type CanonicalDataClient } from '../../services/canonical-data-client';
 
 /**
  * Loads customers (newest first), optionally filtered by stage, from Storage Express.
  */
 export const getAllCustomers = async (
-  storage: StorageClient,
+  client: CanonicalDataClient,
   params?: GetAllCustomersParams
-): Promise<Customer[]> => invokeStorageOperation<Customer[]>(storage, 'getAllCustomers', [params]);
+): Promise<Customer[]> => invokeCanonicalDataOperation<Customer[]>(client, 'getAllCustomers', [params]);

@@ -40,7 +40,7 @@ Storage: `POST /api/storage/seed/export`, `POST /api/storage/seed/import` (`conf
 ## Availability
 
 - Express must **start and pass Hub health** when storage is down. `GET /api/health` is **liveness only** (always HTTP 200); `storage` / `database` in the body report dependency state.
-- Storage HTTP calls use `StorageUnavailableError` (`unreachable` | `timeout`) for refused hosts and aborts; data handlers log one line and return 500 with that message.
+- Upstream HTTP failures surface as `Error` with the gateway/backend `error` body when present; handlers return 500 with that message.
 - Health probes storage with a **750ms** timeout, **2s** cache, and logs only when reachability changes.
 
 ## Consequences

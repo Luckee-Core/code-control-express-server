@@ -1,28 +1,35 @@
-import { getManagedStorageClient } from '../storage-client';
-import { probeStorage } from './probe-storage';
+import { getManagedCanonicalDataClient } from '../canonical-data-client';
+import { probeCanonicalData } from './probe-canonical-data';
 
 export type HealthReport = {
   status: 'ok' | 'degraded';
   message: string;
-  storage: 'ok' | 'unconfigured' | 'error';
-  storageUrl: string | null;
+  canonicalData: 'ok' | 'unconfigured' | 'error';
+  gatewayUrl: string | null;
+  gatewayProjectId: string | null;
+  directUrl: string | null;
   database: 'ok' | 'unconfigured' | 'error';
   timestamp: string;
   environment: string;
 };
 
 /**
- * Builds the health report (liveness); storage state comes from probeStorage.
+ * Builds the health report (liveness); dependency state from probeCanonicalData.
  */
 export const processGetHealth = async (): Promise<HealthReport> => {
-  const storageClient = getManagedStorageClient();
-  const probe = await probeStorage();
+  const client = getManagedCanonicalDataClient();
+  const probe = await probeCanonicalData();
+
+  const canonicalOk = probe.canonicalData === 'ok';
+  const dbOk = probe.database === 'ok' || probe.database === 'unconfigured';
 
   return {
-    status: probe.storage === 'ok' && probe.database === 'ok' ? 'ok' : 'degraded',
+    status: canonicalOk && dbOk ? 'ok' : 'degraded',
     message: 'Code Control Express Server is running',
-    storage: probe.storage,
-    storageUrl: storageClient?.baseUrl ?? null,
+    canonicalData: probe.canonicalData,
+    gatewayUrl: client?.accessMode === 'gateway' ? client.gatewayUrl : null,
+    gatewayProjectId: client?.accessMode === 'gateway' ? client.gatewayProjectId : null,
+    directUrl: client?.accessMode === 'direct' ? client.directUrl : null,
     database: probe.database,
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',

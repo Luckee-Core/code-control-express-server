@@ -1,8 +1,8 @@
-import { invokeStorageOperation, type StorageClient } from '../../services/storage-client';
+import { invokeCanonicalDataOperation, type CanonicalDataClient } from '../../services/canonical-data-client';
 
 /**
  * Deletes a customer_projects row via Storage Express.
  */
-export const deleteProject = async (storage: StorageClient, id: string): Promise<void> => {
-  await invokeStorageOperation<null>(storage, 'deleteProject', [id]);
+export const deleteProject = async (client: CanonicalDataClient, id: string): Promise<void> => {
+  await invokeCanonicalDataOperation<null>(client, 'deleteProject', [id]);
 };

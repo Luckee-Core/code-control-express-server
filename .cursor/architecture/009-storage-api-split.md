@@ -35,7 +35,7 @@ Header `x-storage-secret`: storage `STORAGE_DISPATCHER_SECRET` = express `CODE_C
 
 ### Temp migration
 
-Storage: `POST /api/storage/seed/export`, `POST /api/storage/seed/import` (`confirm: REPLACE_STUDIO_CODE_CONTROL`). Express: `POST /api/admin/temp-import-from-laptop-storage` when `TEMP_MIGRATION_ENABLED=true`. Procedure: [CODE-CONTROL-STUDIO-DATA-MIGRATION.md](../../../../on-device-dispatcher/on-device-dispatcher-express-server/docs/CODE-CONTROL-STUDIO-DATA-MIGRATION.md). Remove temp env after the studio owns the data.
+Storage: `POST /api/storage/seed/export`, `POST /api/storage/seed/import` (`confirm: REPLACE_STUDIO_CODE_CONTROL`). Optional express: `POST /api/studio-seed/import-to-local` or `POST /api/admin/temp-import-from-laptop-storage` when `TEMP_MIGRATION_ENABLED=true` — studio-only; remove temp env after use.
 
 ## Availability
 

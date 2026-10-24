@@ -43,8 +43,16 @@ export const initializeManagedStorageClient = (): void => {
         : 'Storage Express';
     console.log(`✅ Canonical data via ${via} → ${storage.baseUrl}`);
   } else {
-    console.error(
-      '❌ Canonical data not configured: direct → CODE_CONTROL_STORAGE_URL + CODE_CONTROL_STORAGE_SECRET; gateway → MAIN_GATEWAY_URL + DISPATCHER_GATE_SECRET',
-    );
+    const legacyUrl = process.env.STORAGE_EXPRESS_URL?.trim();
+    const legacySecret = process.env.STORAGE_EXPRESS_SECRET?.trim();
+    if (legacyUrl || legacySecret) {
+      console.error(
+        '❌ STORAGE_EXPRESS_URL / STORAGE_EXPRESS_SECRET are no longer used. Use CODE_CONTROL_STORAGE_* (studio direct) or MAIN_GATEWAY_URL + DISPATCHER_GATE_SECRET (gateway).',
+      );
+    } else {
+      console.error(
+        '❌ Canonical data not configured: direct → CODE_CONTROL_STORAGE_URL + CODE_CONTROL_STORAGE_SECRET; gateway → MAIN_GATEWAY_URL + DISPATCHER_GATE_SECRET',
+      );
+    }
   }
 };

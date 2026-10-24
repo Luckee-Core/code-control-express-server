@@ -1,4 +1,5 @@
 export {
+  describeCanonicalDataConfigGap,
   isCanonicalDataClientConfigured,
   readCanonicalDataRequestSecret,
   readDirectBackendSecret,

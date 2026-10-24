@@ -2,8 +2,9 @@ import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config();
-dotenv.config({ path: path.resolve(process.cwd(), '.env.local'), override: true });
+const projectRoot = path.resolve(__dirname);
+dotenv.config({ path: path.join(projectRoot, '.env') });
+dotenv.config({ path: path.join(projectRoot, '.env.local'), override: true });
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3010;

@@ -1,4 +1,5 @@
 import {
+  describeCanonicalDataConfigGap,
   isCanonicalDataClientConfigured,
   readCanonicalDataRequestSecret,
   readCanonicalDataAccessMode,
@@ -35,9 +36,7 @@ export const initializeManagedCanonicalDataClient = (): void => {
   console.log('🚀 Initializing canonical data client');
   const client = getManagedCanonicalDataClient();
   if (!client) {
-    console.error(
-      '❌ Canonical data not configured. Gateway: MAIN_GATEWAY_URL + MAIN_GATEWAY_PROJECT_ID + DISPATCHER_GATE_SECRET. Studio direct: CODE_CONTROL_DIRECT_URL + CODE_CONTROL_DIRECT_SECRET.',
-    );
+    console.error(`❌ Canonical data not configured. ${describeCanonicalDataConfigGap() ?? 'Unknown config error.'}`);
     return;
   }
   if (client.accessMode === 'gateway') {

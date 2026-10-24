@@ -58,12 +58,28 @@ export const readCanonicalDataAccessMode = (): CanonicalDataAccessMode => {
   return 'direct';
 };
 
-export const isCanonicalDataClientConfigured = (): boolean => {
-  if (readCanonicalDataAccessMode() === 'gateway') {
-    return !!readMainGatewayUrl() && !!readGatewayProjectId() && !!readDispatcherGateSecret();
+export const describeCanonicalDataConfigGap = (): string | null => {
+  const mode = readCanonicalDataAccessMode();
+  if (mode === 'gateway') {
+    const missing: string[] = [];
+    if (!readMainGatewayUrl()) missing.push('MAIN_GATEWAY_URL');
+    if (!readGatewayProjectId()) missing.push('MAIN_GATEWAY_PROJECT_ID');
+    if (!readDispatcherGateSecret()) missing.push('DISPATCHER_GATE_SECRET');
+    if (missing.length > 0) {
+      return `Gateway mode — set ${missing.join(', ')} in code-control-express-server/.env`;
+    }
+    return null;
   }
-  return !!readDirectBackendUrl() && !!readDirectBackendSecret();
+  const missing: string[] = [];
+  if (!readDirectBackendUrl()) missing.push('CODE_CONTROL_DIRECT_URL');
+  if (!readDirectBackendSecret()) missing.push('CODE_CONTROL_DIRECT_SECRET');
+  if (missing.length > 0) {
+    return `Direct mode — set ${missing.join(', ')} in code-control-express-server/.env (or use gateway vars and remove STORAGE_ACCESS_MODE=direct)`;
+  }
+  return null;
 };
+
+export const isCanonicalDataClientConfigured = (): boolean => !describeCanonicalDataConfigGap();
 
 export const readCanonicalDataRequestSecret = (): string | null => {
   if (readCanonicalDataAccessMode() === 'gateway') {

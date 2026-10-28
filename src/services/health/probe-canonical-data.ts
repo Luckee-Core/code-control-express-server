@@ -1,7 +1,5 @@
-import { readMainGatewayUrl } from '../canonical-data-client/config';
 import {
   getManagedCanonicalDataClient,
-  requestAtAbsoluteUrl,
   requestWithCanonicalDataClient,
 } from '../canonical-data-client';
 
@@ -11,11 +9,12 @@ export type CanonicalDataProbe = {
   canonicalData: ComponentStatus;
   database: ComponentStatus;
   checkedAt: number;
+  detail: string | null;
 };
 
 const CACHE_MS = 2000;
 const GATEWAY_PROBE_TIMEOUT_MS = 8_000;
-const DIRECT_PROBE_TIMEOUT_MS = 750;
+const DIRECT_PROBE_TIMEOUT_MS = 8_000;
 
 let lastProbe: CanonicalDataProbe | null = null;
 let inFlight: Promise<CanonicalDataProbe> | null = null;
@@ -25,6 +24,7 @@ const unconfiguredProbe = (): CanonicalDataProbe => ({
   canonicalData: 'unconfigured',
   database: 'unconfigured',
   checkedAt: Date.now(),
+  detail: null,
 });
 
 const logCanonicalDataStatusChange = (
@@ -47,7 +47,7 @@ const logCanonicalDataStatusChange = (
 };
 
 /**
- * Liveness for canonical data: gateway mode pings main gateway only; direct mode pings backend health.
+ * Liveness for canonical data: gateway and direct both ping `/api/storage/health` on the data plane.
  */
 export const probeCanonicalData = async (): Promise<CanonicalDataProbe> => {
   const client = getManagedCanonicalDataClient();
@@ -65,36 +65,25 @@ export const probeCanonicalData = async (): Promise<CanonicalDataProbe> => {
 
   inFlight = (async (): Promise<CanonicalDataProbe> => {
     try {
-      if (client.accessMode === 'gateway') {
-        const gatewayUrl = readMainGatewayUrl();
-        if (!gatewayUrl) {
-          return unconfiguredProbe();
-        }
-        await requestAtAbsoluteUrl<{ status?: string }>(gatewayUrl, '/api/health', {
-          gateSecret: client.gateSecret,
-          timeoutMs: GATEWAY_PROBE_TIMEOUT_MS,
-        });
-        const probe: CanonicalDataProbe = {
-          canonicalData: 'ok',
-          database: 'unconfigured',
-          checkedAt: Date.now(),
-        };
-        logCanonicalDataStatusChange(`gateway ${gatewayUrl}`, probe);
-        lastProbe = probe;
-        return probe;
-      }
+      const timeoutMs =
+        client.accessMode === 'gateway' ? GATEWAY_PROBE_TIMEOUT_MS : DIRECT_PROBE_TIMEOUT_MS;
 
       const data = await requestWithCanonicalDataClient<{ database?: ComponentStatus }>(
         client,
         '/api/storage/health',
-        { timeoutMs: DIRECT_PROBE_TIMEOUT_MS },
+        { timeoutMs },
       );
       const probe: CanonicalDataProbe = {
         canonicalData: 'ok',
         database: data.database ?? 'error',
         checkedAt: Date.now(),
+        detail: null,
       };
-      logCanonicalDataStatusChange(client.directUrl ?? 'direct', probe);
+      const label =
+        client.accessMode === 'gateway'
+          ? `gateway ${client.gatewayUrl}/${client.gatewayProjectId}`
+          : (client.directUrl ?? 'direct');
+      logCanonicalDataStatusChange(label, probe);
       lastProbe = probe;
       return probe;
     } catch (error) {
@@ -103,6 +92,7 @@ export const probeCanonicalData = async (): Promise<CanonicalDataProbe> => {
         canonicalData: 'error',
         database: 'error',
         checkedAt: Date.now(),
+        detail: message,
       };
       const label =
         client.accessMode === 'gateway'

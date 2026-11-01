@@ -14,21 +14,25 @@ setupEarlyMiddleware(app);
 
 import { initializeManagedCanonicalDataClient } from './src/services/managed';
 import { probeCanonicalData } from './src/services/health/probe-canonical-data';
+import { initializeOpsTrackerGatewayClient } from './src/services/ops-tracker-client';
 initializeManagedCanonicalDataClient();
+initializeOpsTrackerGatewayClient();
 void probeCanonicalData();
 
 import { createHealthRouter } from './src/services/health';
 app.use('/', createHealthRouter());
 app.use('/api/health', createHealthRouter());
 
-import { createCustomersRouter } from './src/services/customers';
-import { createProjectSetupRouter } from './src/services/project-setup';
-import { createProjectsRouter } from './src/services/projects';
-import { createProjectReposRouter } from './src/services/project-repos';
-app.use('/api/data/customers', createCustomersRouter());
-app.use('/api/data/projects/:id/project-setup', createProjectSetupRouter());
-app.use('/api/data/projects', createProjectsRouter());
-app.use('/api/data/project-repos', createProjectReposRouter());
+import { createCrmProxyRouter } from './src/services/crm-proxy';
+import { createCustomerOpsSyncRouter } from './src/services/customer-ops-sync';
+import { createSoftwareSystemSetupRouter } from './src/services/software-system-setup';
+import { createSoftwareSystemsRouter } from './src/services/software-systems';
+import { createSoftwareSystemReposRouter } from './src/services/software-system-repos';
+app.use('/api/crm', createCrmProxyRouter());
+app.use('/api/integrations/customer-ops-sync', createCustomerOpsSyncRouter());
+app.use('/api/data/software-systems/:id/software-system-setup', createSoftwareSystemSetupRouter());
+app.use('/api/data/software-systems', createSoftwareSystemsRouter());
+app.use('/api/data/software-system-repos', createSoftwareSystemReposRouter());
 
 import { createTempMigrationRouter } from './src/services/temp-migration';
 app.use('/api/admin', createTempMigrationRouter());

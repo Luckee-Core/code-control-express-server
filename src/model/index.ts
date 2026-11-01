@@ -1,8 +1,7 @@
+export type { Customer, CustomerStatus, GetAllCustomersParams, CreateCustomerInput } from './customer';
 export type {
-  Customer,
-  CustomerStage,
-  GetAllCustomersParams,
-  CreateCustomerInput,
-} from './customer';
-export type { Project, CreateProjectInput, UpdateProjectInput } from './project';
-export type { RepoType, ProjectRepo, InsertProjectRepoInput } from './project-repo';
+  SoftwareSystem,
+  CreateSoftwareSystemInput,
+  UpdateSoftwareSystemInput,
+} from './software-system';
+export type { RepoType, SoftwareSystemRepo, InsertSoftwareSystemRepoInput } from './software-system-repo';

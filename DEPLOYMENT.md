@@ -23,6 +23,27 @@ Browser ──► code-control (Next) ──► code-control-express-server ─�
 |-------|-----------|
 | Studio Hub (local storage) | `CODE_CONTROL_STORAGE_URL=http://127.0.0.1:3080`, `CODE_CONTROL_STORAGE_SECRET` (= storage `STORAGE_DISPATCHER_SECRET`) |
 | Laptop → studio gateway | `MAIN_GATEWAY_URL=http://<STUDIO>:3010`, `DISPATCHER_GATE_SECRET` (no storage secret on laptop) |
+| CRM (My Ops customers) | `MAIN_GATEWAY_URL`, `DISPATCHER_GATE_SECRET`, `OPS_TRACKER_GATEWAY_PROJECT_ID=my-ops-tracker` — required for `/api/crm/*` even when Code Control storage uses direct mode |
+
+## CRM (My Ops Tracker via main gateway)
+
+Customers for Code Control are read from **my-ops-tracker storage** through the studio main gateway (same pattern as estimate-and-proposals ADR 010). Express proxies `GET /api/crm/*` to `{MAIN_GATEWAY_URL}/{OPS_TRACKER_GATEWAY_PROJECT_ID}/api/storage/...`.
+
+**Prerequisites**
+
+1. Main gateway migration `on-device-dispatcher-express-server/migrations/013_my_ops_tracker_gateway.sql` applied.
+2. My Ops storage migration `004_dispatcher_exposed_endpoints.sql` exposes `GET /api/storage/customers` and `POST /api/storage/v1/invoke`.
+3. CRM data exists in my-ops Postgres (`customers` table).
+
+**Sanity checks**
+
+```bash
+curl -sS -H "x-dispatcher-gate-secret: $DISPATCHER_GATE_SECRET" \
+  "http://127.0.0.1:3010/my-ops-tracker/api/storage/customers"
+curl -sS "http://127.0.0.1:3012/api/crm/customers"
+```
+
+See `.cursor/architecture/010-hybrid-crm-ops-tracker.md`.
 
 ## Homelab gateway (studio)
 

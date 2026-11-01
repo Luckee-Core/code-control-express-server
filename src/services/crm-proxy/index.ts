@@ -1,0 +1,1 @@
+export { createCrmProxyRouter } from './router';

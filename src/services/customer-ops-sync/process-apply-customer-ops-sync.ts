@@ -6,6 +6,7 @@ import {
   requestOpsTrackerInvoke,
 } from '../ops-tracker-client';
 import { mapCustomerStageToOpsStatus } from './utils/map-customer-stage-to-ops-status';
+import { normalizeCustomerName } from './utils/normalize-customer-name';
 import type {
   CustomerOpsSyncApplyPayload,
   CustomerOpsSyncApplyRequest,
@@ -82,18 +83,33 @@ export const processApplyCustomerOpsSync = async (
           throw new Error(`Ops customer ${opsCustomerId} not found in latest CRM list`);
         }
       } else {
-        const createResult = await requestOpsTrackerInvoke<OpsCustomer>(gatewayConfig, 'createCustomer', [
-          {
-            user_id: null,
-            name: local.name,
-            status: mapCustomerStageToOpsStatus(local.stage ?? 'discovery_call'),
-          },
-        ]);
-        if (!createResult.success) {
-          throw new Error(createResult.error);
+        const normalizedLocal = normalizeCustomerName(local.name);
+        const nameMatches = (opsResult.data ?? []).filter(
+          (ops) => normalizeCustomerName(ops.name) === normalizedLocal,
+        );
+        if (nameMatches.length === 1) {
+          opsCustomerId = nameMatches[0].id;
+          if (!opsIds.has(opsCustomerId)) {
+            throw new Error(`Ops customer ${opsCustomerId} not found in latest CRM list`);
+          }
+        } else if (nameMatches.length > 1) {
+          throw new Error(
+            `Multiple Ops customers match "${local.name}" — use link and pick one explicitly`,
+          );
+        } else {
+          const createResult = await requestOpsTrackerInvoke<OpsCustomer>(gatewayConfig, 'createCustomer', [
+            {
+              user_id: null,
+              name: local.name,
+              status: mapCustomerStageToOpsStatus(local.stage ?? 'discovery_call'),
+            },
+          ]);
+          if (!createResult.success) {
+            throw new Error(createResult.error);
+          }
+          opsCustomerId = createResult.data.id;
+          opsIds.add(opsCustomerId);
         }
-        opsCustomerId = createResult.data.id;
-        opsIds.add(opsCustomerId);
       }
 
       const remap = await remapCustomerIdForStudio(client, decision.localCustomerId, opsCustomerId);

@@ -11,7 +11,7 @@ export const setupEarlyMiddleware = (app: Express): void => {
   app.use(cors());
   
   // JSON body parsing middleware
-  app.use(express.json());
+  app.use(express.json({ limit: '2mb' }));
   
   // URL-encoded body parsing middleware
   app.use(express.urlencoded({ extended: true }));

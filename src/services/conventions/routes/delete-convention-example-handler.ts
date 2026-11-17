@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
-import { logHandlerError } from '../../../utils/http/log-handler-error';
+import { readRouteParam } from '../../../utils/http/read-route-param';
 import { requireDataClient } from '../../../utils/http/require-data-client';
-import { processDeleteConventionExample } from '../process-delete-convention-example';
+import { sendHandlerError } from '../../../utils/http/send-handler-error';
+import { processDeleteConventionExample } from '../process-convention-examples';
 
 /**
  * Handles DELETE /api/data/conventions/examples/:exampleId.
@@ -10,21 +11,19 @@ export const deleteConventionExampleHandler = async (req: Request, res: Response
   const client = requireDataClient(res);
   if (!client) return;
 
-  const exampleId = req.params.exampleId;
-  if (!exampleId || Array.isArray(exampleId)) {
-    res.status(400).json({ success: false, error: 'Invalid example ID' });
+  const exampleId = readRouteParam(req, 'exampleId');
+  if (!exampleId) {
+    res.status(400).json({ success: false, error: 'Missing exampleId' });
     return;
   }
-
-  console.log('📥 DELETE /api/data/conventions/examples/:exampleId', { exampleId });
   try {
-    const result = await processDeleteConventionExample(client, exampleId);
-    res.status(200).json({ success: true, data: result });
+    const deleted = await processDeleteConventionExample(client, exampleId);
+    if (!deleted) {
+      res.status(404).json({ success: false, error: 'Example not found' });
+      return;
+    }
+    res.status(200).json({ success: true, data: { id: exampleId } });
   } catch (error) {
-    logHandlerError('Error in DELETE /api/data/conventions/examples/:exampleId', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    });
+    sendHandlerError(res, 'Error in DELETE /api/data/conventions/examples/:exampleId', error);
   }
 };

@@ -2,9 +2,9 @@ import { deleteConvention } from '../../data/conventions';
 import type { CanonicalDataClient } from '../canonical-data-client';
 
 /**
- * Deletes a convention for DELETE /api/data/conventions/:id.
+ * Deletes a convention; returns false when it did not exist.
  */
-export const processDeleteConvention = async (
-  client: CanonicalDataClient,
-  id: string
-): Promise<{ deleted: boolean }> => deleteConvention(client, id);
+export const processDeleteConvention = async (client: CanonicalDataClient, id: string): Promise<boolean> => {
+  const result = await deleteConvention(client, id);
+  return result.deleted;
+};

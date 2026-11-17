@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
-import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { requireDataClient } from '../../../utils/http/require-data-client';
+import { sendHandlerError } from '../../../utils/http/send-handler-error';
 import { processCreateConvention } from '../process-create-convention';
+import { readRoleKeys, validateCreateConvention } from '../validate-convention-input';
 
 /**
  * Handles POST /api/data/conventions.
@@ -10,38 +11,18 @@ export const postCreateConventionHandler = async (req: Request, res: Response): 
   const client = requireDataClient(res);
   if (!client) return;
 
-  const { key, domain_key, topic_key, title, statement, rationale, severity, status, check_kind, check_config, sort_order } =
-    req.body ?? {};
-  const required = { key, domain_key, topic_key, title, statement };
-  const missing = Object.entries(required)
-    .filter(([, value]) => typeof value !== 'string' || !value.trim())
-    .map(([name]) => name);
-  if (missing.length) {
-    res.status(400).json({ success: false, error: `Missing required fields: ${missing.join(', ')}` });
+  const input = validateCreateConvention(req.body);
+  const roleKeys = readRoleKeys(req.body);
+  if (!input.ok || !roleKeys.ok) {
+    res.status(400).json({ success: false, error: !input.ok ? input.error : (roleKeys as { error: string }).error });
     return;
   }
 
-  console.log('📥 POST /api/data/conventions', { key });
+  console.log('📥 POST /api/data/conventions', { key: input.value.key });
   try {
-    const convention = await processCreateConvention(client, {
-      key: key.trim(),
-      domain_key: domain_key.trim(),
-      topic_key: topic_key.trim(),
-      title: title.trim(),
-      statement: statement.trim(),
-      ...(rationale !== undefined && { rationale }),
-      ...(severity !== undefined && { severity }),
-      ...(status !== undefined && { status }),
-      ...(check_kind !== undefined && { check_kind }),
-      ...(check_config !== undefined && { check_config }),
-      ...(sort_order !== undefined && { sort_order }),
-    });
-    res.status(201).json({ success: true, data: convention });
+    const detail = await processCreateConvention(client, input.value, roleKeys.value);
+    res.status(201).json({ success: true, data: detail });
   } catch (error) {
-    logHandlerError('Error in POST /api/data/conventions', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    });
+    sendHandlerError(res, 'Error in POST /api/data/conventions', error);
   }
 };

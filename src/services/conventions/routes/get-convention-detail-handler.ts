@@ -1,21 +1,21 @@
 import type { Request, Response } from 'express';
-import { logHandlerError } from '../../../utils/http/log-handler-error';
+import { readRouteParam } from '../../../utils/http/read-route-param';
 import { requireDataClient } from '../../../utils/http/require-data-client';
+import { sendHandlerError } from '../../../utils/http/send-handler-error';
 import { processGetConventionDetail } from '../process-get-convention-detail';
 
 /**
- * Handles GET /api/data/conventions/:id.
+ * Handles GET /api/data/conventions/:id (convention + roles + examples + sources).
  */
-export const getConventionByIdHandler = async (req: Request, res: Response): Promise<void> => {
+export const getConventionDetailHandler = async (req: Request, res: Response): Promise<void> => {
   const client = requireDataClient(res);
   if (!client) return;
 
-  const id = req.params.id;
-  if (!id || Array.isArray(id)) {
-    res.status(400).json({ success: false, error: 'Invalid convention ID' });
+  const id = readRouteParam(req, 'id');
+  if (!id) {
+    res.status(400).json({ success: false, error: 'Missing id' });
     return;
   }
-
   try {
     const detail = await processGetConventionDetail(client, id);
     if (!detail) {
@@ -24,10 +24,6 @@ export const getConventionByIdHandler = async (req: Request, res: Response): Pro
     }
     res.status(200).json({ success: true, data: detail });
   } catch (error) {
-    logHandlerError('Error in GET /api/data/conventions/:id', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    });
+    sendHandlerError(res, 'Error in GET /api/data/conventions/:id', error);
   }
 };

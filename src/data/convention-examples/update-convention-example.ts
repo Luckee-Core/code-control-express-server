@@ -2,10 +2,11 @@ import type { ConventionExample, UpdateConventionExampleInput } from '../../mode
 import { invokeCanonicalDataOperation, type CanonicalDataClient } from '../../services/canonical-data-client';
 
 /**
- * Updates a convention example. (Storage Express `updateConventionExample`)
+ * Updates a convention example. (Storage Express invoke)
  */
 export const updateConventionExample = async (
   client: CanonicalDataClient,
   id: string,
-  input: UpdateConventionExampleInput
-): Promise<ConventionExample> => invokeCanonicalDataOperation<ConventionExample>(client, 'updateConventionExample', [id, input]);
+  input: UpdateConventionExampleInput,
+): Promise<ConventionExample> =>
+  invokeCanonicalDataOperation<ConventionExample>(client, 'updateConventionExample', [id, input]);

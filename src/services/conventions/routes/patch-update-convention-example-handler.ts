@@ -1,7 +1,9 @@
 import type { Request, Response } from 'express';
-import { logHandlerError } from '../../../utils/http/log-handler-error';
+import { readRouteParam } from '../../../utils/http/read-route-param';
 import { requireDataClient } from '../../../utils/http/require-data-client';
-import { processUpdateConventionExample } from '../process-update-convention-example';
+import { sendHandlerError } from '../../../utils/http/send-handler-error';
+import { processUpdateConventionExample } from '../process-convention-examples';
+import { validateUpdateConventionExample } from '../validate-convention-input';
 
 /**
  * Handles PATCH /api/data/conventions/examples/:exampleId.
@@ -10,30 +12,22 @@ export const patchUpdateConventionExampleHandler = async (req: Request, res: Res
   const client = requireDataClient(res);
   if (!client) return;
 
-  const exampleId = req.params.exampleId;
-  if (!exampleId || Array.isArray(exampleId)) {
-    res.status(400).json({ success: false, error: 'Invalid example ID' });
+  const exampleId = readRouteParam(req, 'exampleId');
+  if (!exampleId) {
+    res.status(400).json({ success: false, error: 'Missing exampleId' });
     return;
   }
-  const { title, kind, language, path_hint, code, note, sort_order } = req.body ?? {};
 
-  console.log('📥 PATCH /api/data/conventions/examples/:exampleId', { exampleId });
+  const input = validateUpdateConventionExample(req.body);
+  if (!input.ok) {
+    res.status(400).json({ success: false, error: input.error });
+    return;
+  }
+
   try {
-    const example = await processUpdateConventionExample(client, exampleId, {
-      ...(title !== undefined && { title }),
-      ...(kind !== undefined && { kind }),
-      ...(language !== undefined && { language }),
-      ...(path_hint !== undefined && { path_hint }),
-      ...(code !== undefined && { code }),
-      ...(note !== undefined && { note }),
-      ...(sort_order !== undefined && { sort_order }),
-    });
+    const example = await processUpdateConventionExample(client, exampleId, input.value);
     res.status(200).json({ success: true, data: example });
   } catch (error) {
-    logHandlerError('Error in PATCH /api/data/conventions/examples/:exampleId', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    });
+    sendHandlerError(res, 'Error in PATCH /api/data/conventions/examples/:exampleId', error);
   }
 };

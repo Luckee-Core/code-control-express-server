@@ -41,3 +41,5 @@ export type {
   CreateConventionSnapshotUseInput,
   ListConventionSnapshotUsesFilter,
 } from './convention-snapshot-use';
+export * from './data-model-proposal';
+export * from './data-model-proposal-ai-exchange';

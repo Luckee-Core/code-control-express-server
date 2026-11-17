@@ -2,9 +2,10 @@ import type { ConventionSource, CreateConventionSourceInput } from '../../model/
 import { invokeCanonicalDataOperation, type CanonicalDataClient } from '../../services/canonical-data-client';
 
 /**
- * Creates a convention source (provenance row). (Storage Express `createConventionSource`)
+ * Creates a convention source. (Storage Express invoke)
  */
 export const createConventionSource = async (
   client: CanonicalDataClient,
-  input: CreateConventionSourceInput
-): Promise<ConventionSource> => invokeCanonicalDataOperation<ConventionSource>(client, 'createConventionSource', [input]);
+  input: CreateConventionSourceInput,
+): Promise<ConventionSource> =>
+  invokeCanonicalDataOperation<ConventionSource>(client, 'createConventionSource', [input]);

@@ -1,7 +1,9 @@
 import type { Request, Response } from 'express';
-import { logHandlerError } from '../../../utils/http/log-handler-error';
+import { readRouteParam } from '../../../utils/http/read-route-param';
 import { requireDataClient } from '../../../utils/http/require-data-client';
-import { processCreateConventionSource } from '../process-create-convention-source';
+import { sendHandlerError } from '../../../utils/http/send-handler-error';
+import { processCreateConventionSource } from '../process-convention-sources';
+import { validateCreateConventionSource } from '../validate-convention-input';
 
 /**
  * Handles POST /api/data/conventions/:id/sources.
@@ -10,33 +12,26 @@ export const postCreateConventionSourceHandler = async (req: Request, res: Respo
   const client = requireDataClient(res);
   if (!client) return;
 
-  const id = req.params.id;
-  if (!id || Array.isArray(id)) {
-    res.status(400).json({ success: false, error: 'Invalid convention ID' });
-    return;
-  }
-  const { repo, adr_path, excerpt, copy_count, variant_count } = req.body ?? {};
-  if (typeof repo !== 'string' || !repo.trim() || typeof adr_path !== 'string' || !adr_path.trim()) {
-    res.status(400).json({ success: false, error: 'repo and adr_path are required' });
+  const id = readRouteParam(req, 'id');
+  if (!id) {
+    res.status(400).json({ success: false, error: 'Missing id' });
     return;
   }
 
-  console.log('📥 POST /api/data/conventions/:id/sources', { id });
+  const input = validateCreateConventionSource(id, req.body);
+  if (!input.ok) {
+    res.status(400).json({ success: false, error: input.error });
+    return;
+  }
+
   try {
-    const source = await processCreateConventionSource(client, {
-      convention_id: id,
-      repo: repo.trim(),
-      adr_path: adr_path.trim(),
-      ...(excerpt !== undefined && { excerpt }),
-      ...(copy_count !== undefined && { copy_count }),
-      ...(variant_count !== undefined && { variant_count }),
-    });
+    const source = await processCreateConventionSource(client, input.value);
+    if (!source) {
+      res.status(404).json({ success: false, error: 'Convention not found' });
+      return;
+    }
     res.status(201).json({ success: true, data: source });
   } catch (error) {
-    logHandlerError('Error in POST /api/data/conventions/:id/sources', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    });
+    sendHandlerError(res, 'Error in POST /api/data/conventions/:id/sources', error);
   }
 };

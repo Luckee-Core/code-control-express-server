@@ -7,5 +7,5 @@ import type { CanonicalDataClient } from '../canonical-data-client';
  */
 export const processListConventions = async (
   client: CanonicalDataClient,
-  filter: ListConventionsFilter
+  filter: ListConventionsFilter,
 ): Promise<Convention[]> => listConventions(client, filter);

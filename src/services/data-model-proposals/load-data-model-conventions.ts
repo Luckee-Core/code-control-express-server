@@ -1,6 +1,6 @@
 import type { CanonicalDataClient } from '../canonical-data-client';
 import { processGetConventionsContext, type ConventionsContext } from '../conventions';
-import { DATA_MODEL_DOMAIN_KEY, DATA_MODEL_ROLE_KEY } from './config';
+import { DATA_MODEL_DOMAIN_KEY, DATA_MODEL_ROLE_KEY, PROPOSAL_CONVENTION_EXCLUSIONS } from './config';
 import type { DataModelVocabulary, ProposalRuleConvention } from './types';
 
 export type LoadedDataModelConventions = {
@@ -10,7 +10,8 @@ export type LoadedDataModelConventions = {
 };
 
 /**
- * Loads the active data-model conventions for the storage role once, and derives the prompt
+ * Loads the active data-model conventions for the storage role once (minus the render-step
+ * topics and seeding, see PROPOSAL_CONVENTION_EXCLUSIONS), and derives the prompt
  * text, the output-schema vocabulary and the lint rules from that same snapshot so all three agree.
  */
 export const loadDataModelConventions = async (
@@ -19,6 +20,7 @@ export const loadDataModelConventions = async (
   const context = await processGetConventionsContext(client, {
     domainKey: DATA_MODEL_DOMAIN_KEY,
     roleKey: DATA_MODEL_ROLE_KEY,
+    exclude: PROPOSAL_CONVENTION_EXCLUSIONS,
   });
   const { snapshot } = context;
 

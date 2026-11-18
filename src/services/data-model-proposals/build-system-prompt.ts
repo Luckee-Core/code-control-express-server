@@ -15,6 +15,8 @@ export const buildSystemPrompt = (conventionsText: string): string =>
     '- Use only the allowed column types. Money is always `cents` with a `_cents` suffix. Enum columns list every allowed value in `enum_values`.',
     '- A foreign key sets `references_table` to another table in this proposal, ends in `_id`, and sets `on_delete`. References to other systems (customers, ops-tracker projects) are plain `uuid` columns with no `references_table`.',
     '- `why_needed` explains, in one or two sentences, which part of the core workflow breaks without the table.',
+    '- Seeding is out of scope. Do not propose seed data, seed scripts, initial rows or seeded catalog tables, and do not raise seeding in `open_questions` or `summary`. A small fixed set of values is an enum column; a list the user manages over time is a normal table that starts empty.',
+    '- Migrations, model files and data functions are generated later from your proposal; do not discuss them.',
     '- Use `open_questions` for decisions the user should make; do not guess silently on something that changes the schema.',
     '- When the user gives revision feedback, apply it to the previous proposal and keep everything else stable (same names unless the feedback asks for a rename).',
     '',

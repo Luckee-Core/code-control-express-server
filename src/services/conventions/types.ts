@@ -56,3 +56,10 @@ export type ConventionsContext = {
 };
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; error: string };
+
+/** Keys to leave out when a consumer (e.g. the data-model proposal step) needs only part of a domain. */
+export type ConventionsContextExclusions = {
+  topic_keys?: string[];
+  convention_keys?: string[];
+  archetype_keys?: string[];
+};

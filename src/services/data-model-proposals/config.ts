@@ -2,6 +2,22 @@
 export const DATA_MODEL_DOMAIN_KEY = 'data_model';
 export const DATA_MODEL_ROLE_KEY = 'storage';
 
+/**
+ * The proposal step decides which tables and columns exist. Conventions about how files are
+ * written later (migrations, model files, data functions, the storage split) and anything about
+ * seeding belong to the render/commit step, so the AI never sees them here.
+ */
+export const PROPOSAL_CONVENTION_EXCLUSIONS = {
+  topic_keys: [
+    'data_model.migrations',
+    'data_model.model_types',
+    'data_model.data_layer',
+    'data_model.storage_split',
+  ],
+  convention_keys: ['dm.col.text_pk_catalogs_only'],
+  archetype_keys: ['seeded_catalog'],
+};
+
 /** AI prompt type in services/ai/model-config.ts. */
 export const DATA_MODEL_PROMPT_TYPE = 'data_model_proposal';
 

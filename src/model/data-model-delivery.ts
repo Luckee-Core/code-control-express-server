@@ -42,6 +42,7 @@ export type CreateDataModelDeliveryInput = {
 };
 
 export type UpdateDataModelDeliveryInput = {
+  branch?: string;
   base_branch?: string;
   pr_number?: number | null;
   pr_url?: string;

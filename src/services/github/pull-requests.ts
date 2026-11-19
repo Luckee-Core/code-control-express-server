@@ -6,15 +6,25 @@ export type GithubPullRequest = {
   html_url: string;
   state: 'open' | 'closed';
   merged: boolean;
+  /** Branch the PR was opened from. */
+  head_ref: string;
 };
 
-type RawPullRequest = { number: number; html_url: string; state: 'open' | 'closed'; merged?: boolean; merged_at?: string | null };
+type RawPullRequest = {
+  number: number;
+  html_url: string;
+  state: 'open' | 'closed';
+  merged?: boolean;
+  merged_at?: string | null;
+  head?: { ref?: string };
+};
 
 const toPullRequest = (raw: RawPullRequest): GithubPullRequest => ({
   number: raw.number,
   html_url: raw.html_url,
   state: raw.state,
   merged: Boolean(raw.merged ?? raw.merged_at),
+  head_ref: raw.head?.ref ?? '',
 });
 
 /**

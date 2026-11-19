@@ -10,7 +10,15 @@ import type { SoftwareSystemRepo } from '../../model/software-system-repo';
 import { parseGithubRepoUrl } from '../../utils/parse-github-repo-url';
 import type { CanonicalDataClient } from '../canonical-data-client';
 import type { CodegenRole } from '../codegen';
-import { commitFilesToBranch, createPullRequest, deleteBranch, findOpenPullRequest, mergePullRequest } from '../github';
+import {
+  commitFilesToBranch,
+  createPullRequest,
+  deleteBranch,
+  findOpenPullRequest,
+  listTreePaths,
+  mergePullRequest,
+} from '../github';
+import { ProposalRequestError } from '../data-model-proposals/proposal-request-error';
 import { buildPullRequestBody } from './build-pull-request-body';
 import { DELIVERY_ROLES, deliveryBranchName } from './config';
 import { loadDeliveryInputs, type DeliveryInputs } from './load-delivery-inputs';
@@ -52,6 +60,14 @@ const deliverToRepo = async (
     branch,
   });
 
+  if ((delivery.kind ?? 'model') !== kind) {
+    // Storage before migration 105 ignores `kind` and would overwrite the model delivery row.
+    throw new ProposalRequestError(
+      409,
+      'Studio storage is older than migration 105 (delivery kinds). Pull code-generator-storage-server on the studio, run `npm run db:apply-migrations -- 105` and restart storage, then try again.',
+    );
+  }
+
   const fail = async (error: string): Promise<DataModelDelivery> =>
     (await updateDataModelDelivery(client, delivery.id, { status: 'failed', error })) ?? delivery;
 
@@ -76,6 +92,16 @@ const deliverToRepo = async (
     }
 
     const snapshot = await readRepoHead(repo);
+    if (kind === 'crud') {
+      // CRUD files import the models: every table's model file must already be on the default branch.
+      const paths = await listTreePaths(snapshot.ref, snapshot.base_sha);
+      const missing = content.tables.filter((table) => !paths.has(`src/model/${table.entity}/index.ts`));
+      if (missing.length > 0) {
+        return fail(
+          `${repo.name} ${snapshot.base_branch} is missing ${missing.length} model file(s) (e.g. src/model/${missing[0].entity}/index.ts). Merge the data model PR first (Data model tab).`,
+        );
+      }
+    }
     const { files, findings } = await renderDeliveryFiles({ kind, role, inputs, head: snapshot });
     const errors = findings.filter((finding) => finding.severity === 'error');
     if (errors.length > 0) {

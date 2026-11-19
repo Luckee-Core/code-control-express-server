@@ -40,6 +40,18 @@ export const getFileText = async (ref: GithubRepoRef, path: string, at: string):
 };
 
 /**
+ * Every file path in the repo at a commit (recursive git tree).
+ */
+export const listTreePaths = async (ref: GithubRepoRef, sha: string): Promise<Set<string>> => {
+  const result = await requestGithub<{ tree: Array<{ path: string; type: string }>; truncated: boolean }>(
+    'GET',
+    `${repoPath(ref.owner, ref.repo)}/git/trees/${sha}?recursive=1`,
+  );
+  if (!result.ok) throw new Error(result.error);
+  return new Set(result.data.tree.filter((item) => item.type === 'blob').map((item) => item.path));
+};
+
+/**
  * File names directly inside a directory at a ref ([] when the directory does not exist).
  */
 export const listDirectoryNames = async (ref: GithubRepoRef, path: string, at: string): Promise<string[]> => {

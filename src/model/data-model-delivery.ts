@@ -1,3 +1,6 @@
+/** model = migrations + src/model; crud = data-access layer (CRUD, services, api, dumps, thunks). */
+export type DataModelDeliveryKind = 'model' | 'crud';
+
 export type DataModelDeliveryStatus = 'pending' | 'opened' | 'merged' | 'closed' | 'failed';
 
 /** One file written by a delivery. */
@@ -12,6 +15,7 @@ export type DataModelDelivery = {
   proposal_id: string;
   software_system_id: string;
   software_system_repo_id: string;
+  kind: DataModelDeliveryKind;
   role: string;
   /** owner/repo */
   repo_full_name: string;
@@ -29,6 +33,7 @@ export type DataModelDelivery = {
 
 export type CreateDataModelDeliveryInput = {
   proposal_id: string;
+  kind: DataModelDeliveryKind;
   software_system_id: string;
   software_system_repo_id: string;
   role: string;

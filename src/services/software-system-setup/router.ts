@@ -10,6 +10,7 @@ import { getGithubOrgsHandler } from './routes/get-github-orgs-handler';
 import { getSoftwareSystemSetupReposHandler } from './routes/get-software-system-setup-repos-handler';
 import { createPostCreateRepoHandler } from './routes/post-create-repo-handler';
 import { patchRepoRoleHandler } from './routes/patch-repo-role-handler';
+import { postApplySetupPresetHandler } from './routes/post-apply-setup-preset-handler';
 import { postLinkExistingRepoHandler } from './routes/post-link-existing-repo-handler';
 
 /**
@@ -26,5 +27,6 @@ export const createSoftwareSystemSetupRouter = (): Router => {
   router.post('/create-react-native-repo', createPostCreateRepoHandler(REACT_NATIVE_REPO_TEMPLATE));
   router.post('/link-existing-repo', postLinkExistingRepoHandler);
   router.patch('/repos/:repoId/role', patchRepoRoleHandler);
+  router.post('/apply-preset', postApplySetupPresetHandler);
   return router;
 };

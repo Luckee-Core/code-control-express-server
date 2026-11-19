@@ -1,4 +1,5 @@
 import {
+  listDataModelDeliveriesByProposalId,
   listDataModelDeliveriesBySoftwareSystemRepoId,
   updateDataModelDelivery,
   upsertDataModelDelivery,
@@ -9,12 +10,13 @@ import type { SoftwareSystemRepo } from '../../model/software-system-repo';
 import { parseGithubRepoUrl } from '../../utils/parse-github-repo-url';
 import type { CanonicalDataClient } from '../canonical-data-client';
 import { checkRenderedFiles, renderDataModelFiles, type CodegenRole } from '../codegen';
-import { commitFilesToBranch, createPullRequest, findOpenPullRequest } from '../github';
+import { commitFilesToBranch, createPullRequest, deleteBranch, findOpenPullRequest, mergePullRequest } from '../github';
 import { buildPullRequestBody } from './build-pull-request-body';
 import { DELIVERY_ROLES, deliveryBranchName } from './config';
 import { loadDeliveryInputs, type DeliveryInputs } from './load-delivery-inputs';
 import { readRepoRenderState } from './read-repo-render-state';
 import { resolveRoleRepo } from './resolve-role-repos';
+import { syncDeliveryPullRequest } from './sync-delivery-pull-request';
 import type { DeliveryTarget } from './types';
 
 const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -34,6 +36,7 @@ const deliverToRepo = async (
   inputs: DeliveryInputs,
   role: CodegenRole,
   repo: SoftwareSystemRepo,
+  autoMerge: boolean,
 ): Promise<DataModelDelivery> => {
   const { proposal, content } = inputs;
   const branch = deliveryBranchName(proposal.version);
@@ -86,15 +89,30 @@ const deliverToRepo = async (
       }));
     console.log('✅ [data-model-deliveries] PR ready', { repo: snapshot.full_name, pr: pullRequest.html_url });
 
+    // Rule errors already stopped delivery above, so a PR reaching here passed every MUST/NEVER check.
+    let status: DataModelDelivery['status'] = 'opened';
+    let note: string | null = null;
+    if (autoMerge) {
+      const merged = await mergePullRequest({ ref: snapshot.ref, number: pullRequest.number, title });
+      if (merged.ok) {
+        status = 'merged';
+        await deleteBranch(snapshot.ref, branch);
+        console.log('✅ [data-model-deliveries] Auto-merged', { repo: snapshot.full_name, pr: pullRequest.number });
+      } else {
+        note = `Auto-merge did not go through, so the PR is still open: ${merged.error}`;
+        console.warn('⚠️ [data-model-deliveries] Auto-merge failed', { repo: snapshot.full_name, error: merged.error });
+      }
+    }
+
     return (
       (await updateDataModelDelivery(client, delivery.id, {
         base_branch: snapshot.base_branch,
         commit_sha: commitSha,
         pr_number: pullRequest.number,
         pr_url: pullRequest.html_url,
-        status: 'opened',
+        status,
         files: files.map((file) => ({ path: file.path, action: file.action })),
-        error: null,
+        error: note,
       })) ?? delivery
     );
   } catch (error) {
@@ -105,20 +123,37 @@ const deliverToRepo = async (
 
 /**
  * Delivers the approved data model to each requested role's repo (default: storage, express,
- * web) as one PR per repo. Roles without a repo are returned with a null delivery.
+ * web) as one PR per repo, optionally squash-merging each one. Roles without a repo come back
+ * with a null delivery; repos whose PR for this version is already merged are skipped unchanged.
  */
 export const processDeliverDataModel = async (
   client: CanonicalDataClient,
-  input: { proposalId: string; roles?: CodegenRole[] },
+  input: { proposalId: string; roles?: CodegenRole[]; autoMerge?: boolean },
 ): Promise<DeliveryTarget[]> => {
   const inputs = await loadDeliveryInputs(client, input.proposalId);
-  const repos = await getSoftwareSystemReposBySoftwareSystemId(client, inputs.proposal.software_system_id);
+  const [repos, existing] = await Promise.all([
+    getSoftwareSystemReposBySoftwareSystemId(client, inputs.proposal.software_system_id),
+    listDataModelDeliveriesByProposalId(client, input.proposalId),
+  ]);
   const roles = DELIVERY_ROLES.filter((role) => !input.roles || input.roles.includes(role));
 
   const targets: DeliveryTarget[] = [];
   for (const role of roles) {
     const repo = resolveRoleRepo(repos, role);
-    targets.push({ role, repo, delivery: repo ? await deliverToRepo(client, inputs, role, repo) : null });
+    if (!repo) {
+      targets.push({ role, repo, delivery: null });
+      continue;
+    }
+    // A PR merged (or closed) on GitHub since we last looked counts too.
+    const current = existing.find((item) => item.software_system_repo_id === repo.id);
+    const synced = current ? await syncDeliveryPullRequest(client, current) : null;
+    const merged = synced?.status === 'merged' ? synced : null;
+    if (merged) {
+      console.log('⏭️ [data-model-deliveries] Already merged, skipping', { repo: repo.name, pr: merged.pr_number });
+      targets.push({ role, repo, delivery: merged });
+      continue;
+    }
+    targets.push({ role, repo, delivery: await deliverToRepo(client, inputs, role, repo, input.autoMerge === true) });
   }
   return targets;
 };

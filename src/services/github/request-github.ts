@@ -9,7 +9,7 @@ export type GithubResponse<T> =
  * returns `{ ok: false, status, error }` instead (status 0 when the token is missing or fetch fails).
  */
 export const requestGithub = async <T>(
-  method: 'GET' | 'POST' | 'PATCH',
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
   path: string,
   body?: unknown,
 ): Promise<GithubResponse<T>> => {

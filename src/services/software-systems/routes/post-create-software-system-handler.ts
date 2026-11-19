@@ -10,7 +10,7 @@ export const postCreateSoftwareSystemHandler = async (req: Request, res: Respons
   const client = requireDataClient(res);
   if (!client) return;
 
-  const { customer_id, name, description } = req.body ?? {};
+  const { customer_id, name, description, setup_preset_key } = req.body ?? {};
   if (!customer_id || !name || typeof name !== 'string' || !name.trim()) {
     res.status(400).json({ success: false, error: 'customer_id and name are required' });
     return;
@@ -22,6 +22,7 @@ export const postCreateSoftwareSystemHandler = async (req: Request, res: Respons
       customer_id,
       name: name.trim(),
       description: typeof description === 'string' ? description.trim() : null,
+      setup_preset_key: typeof setup_preset_key === 'string' && setup_preset_key.trim() ? setup_preset_key.trim() : null,
     });
     res.status(201).json({ success: true, data: project });
   } catch (error) {

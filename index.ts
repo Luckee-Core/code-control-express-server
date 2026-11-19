@@ -30,10 +30,12 @@ import { createSoftwareSystemReposRouter } from './src/services/software-system-
 import { createConventionsRouter } from './src/services/conventions';
 import { createDataModelProposalsRouter } from './src/services/data-model-proposals';
 import { createDataModelDeliveriesRouter } from './src/services/data-model-deliveries';
+import { createSetupPresetsRouter } from './src/services/setup-presets';
 app.use('/api/crm', createCrmProxyRouter());
 app.use('/api/data/conventions', createConventionsRouter());
 app.use('/api/data/data-model-proposals', createDataModelProposalsRouter());
 app.use('/api/data/data-model-deliveries', createDataModelDeliveriesRouter());
+app.use('/api/data/setup-presets', createSetupPresetsRouter());
 app.use('/api/data/software-systems/:id/software-system-setup', createSoftwareSystemSetupRouter());
 app.use('/api/data/software-systems', createSoftwareSystemsRouter());
 app.use('/api/data/software-system-repos', createSoftwareSystemReposRouter());

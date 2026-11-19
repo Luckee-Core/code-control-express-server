@@ -44,3 +44,4 @@ export type {
 export * from './data-model-proposal';
 export * from './data-model-proposal-ai-exchange';
 export * from './data-model-delivery';
+export * from './setup-preset';

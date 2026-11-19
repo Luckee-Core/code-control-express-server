@@ -87,6 +87,39 @@ export const createPullRequest = async (input: {
   return toPullRequest(result.data);
 };
 
+const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Squash-merges a pull request. GitHub computes mergeability right after a PR opens, so a
+ * "not mergeable yet" answer (405/409) is retried a few times. Returns the error when it can't merge.
+ */
+export const mergePullRequest = async (input: {
+  ref: GithubRepoRef;
+  number: number;
+  title: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> => {
+  let lastError = '';
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    if (attempt > 0) await wait(1500 * attempt);
+    const result = await requestGithub<{ merged: boolean }>(
+      'PUT',
+      `${repoPath(input.ref.owner, input.ref.repo)}/pulls/${input.number}/merge`,
+      { merge_method: 'squash', commit_title: `${input.title} (#${input.number})` },
+    );
+    if (result.ok && result.data.merged) return { ok: true };
+    lastError = result.ok ? 'GitHub did not merge the pull request' : result.error;
+    if (!result.ok && result.status !== 405 && result.status !== 409) break;
+  }
+  return { ok: false, error: lastError };
+};
+
+/**
+ * Deletes a branch (best effort; used after a merge).
+ */
+export const deleteBranch = async (ref: GithubRepoRef, branch: string): Promise<void> => {
+  await requestGithub('DELETE', `${repoPath(ref.owner, ref.repo)}/git/refs/heads/${branch.split('/').map(encodeURIComponent).join('/')}`);
+};
+
 /**
  * One pull request's current state (open / closed, merged).
  */

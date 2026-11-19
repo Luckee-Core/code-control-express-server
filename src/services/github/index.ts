@@ -3,5 +3,12 @@ export type { CreateRepoFromTemplateInput, CreateRepoFromTemplateResult } from '
 export { requestGithub } from './request-github';
 export { getDefaultBranchHead, getFileText, listDirectoryNames } from './repo-contents';
 export type { GithubRepoRef } from './repo-contents';
-export { commitFilesToBranch, createPullRequest, findOpenPullRequest, getPullRequest } from './pull-requests';
+export {
+  commitFilesToBranch,
+  createPullRequest,
+  deleteBranch,
+  findOpenPullRequest,
+  getPullRequest,
+  mergePullRequest,
+} from './pull-requests';
 export type { GithubPullRequest } from './pull-requests';

@@ -24,7 +24,6 @@ app.use('/', createHealthRouter());
 app.use('/api/health', createHealthRouter());
 
 import { createCrmProxyRouter } from './src/services/crm-proxy';
-import { createCustomerOpsSyncRouter } from './src/services/customer-ops-sync';
 import { createSoftwareSystemSetupRouter } from './src/services/software-system-setup';
 import { createSoftwareSystemsRouter } from './src/services/software-systems';
 import { createSoftwareSystemReposRouter } from './src/services/software-system-repos';
@@ -35,7 +34,6 @@ app.use('/api/crm', createCrmProxyRouter());
 app.use('/api/data/conventions', createConventionsRouter());
 app.use('/api/data/data-model-proposals', createDataModelProposalsRouter());
 app.use('/api/data/data-model-deliveries', createDataModelDeliveriesRouter());
-app.use('/api/integrations/customer-ops-sync', createCustomerOpsSyncRouter());
 app.use('/api/data/software-systems/:id/software-system-setup', createSoftwareSystemSetupRouter());
 app.use('/api/data/software-systems', createSoftwareSystemsRouter());
 app.use('/api/data/software-system-repos', createSoftwareSystemReposRouter());

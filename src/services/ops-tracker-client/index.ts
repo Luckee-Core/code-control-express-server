@@ -8,3 +8,8 @@ export {
   readOpsTrackerGatewayConfig,
 } from './config';
 export type { OpsTrackerRequestResult, ParsedOpsTrackerCrmPath } from './types';
+export { invokeOpsOrThrow } from './invoke-ops-or-throw';
+export { getOpsTicket } from './get-ops-ticket';
+export { getOpsTicketRepoNames } from './get-ops-ticket-repo-names';
+export { getOpsLatestTicketResearch } from './get-ops-latest-ticket-research';
+export { updateOpsTicketPullRequest } from './update-ops-ticket-pull-request';

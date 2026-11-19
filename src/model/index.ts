@@ -43,3 +43,4 @@ export type {
 } from './convention-snapshot-use';
 export * from './data-model-proposal';
 export * from './data-model-proposal-ai-exchange';
+export * from './data-model-delivery';

@@ -5,7 +5,7 @@ import { requireDataClient } from '../../../utils/http/require-data-client';
 import { parseGithubRepoUrl } from '../../../utils/parse-github-repo-url';
 import { processLinkExistingRepo } from '../process-link-existing-repo';
 
-const REPO_TYPES: RepoType[] = ['express', 'python', 'nextjs', 'react-native'];
+const REPO_TYPES: RepoType[] = ['express', 'python', 'nextjs', 'react-native', 'storage-express'];
 
 /**
  * Handles POST /api/data/software-systems/:id/software-system-setup/link-existing-repo.
@@ -25,7 +25,7 @@ export const postLinkExistingRepoHandler = async (req: Request, res: Response): 
   if (!repoType) {
     res.status(400).json({
       success: false,
-      error: 'repo_type must be express, python, nextjs, or react-native',
+      error: 'repo_type must be express, python, nextjs, react-native, or storage-express',
     });
     return;
   }

@@ -1,0 +1,17 @@
+import { Router } from 'express';
+import { getDataModelDeliveriesHandler } from './routes/get-data-model-deliveries-handler';
+import { getDataModelDeliveryPreviewHandler } from './routes/get-data-model-delivery-preview-handler';
+import { postDataModelDeliveryHandler } from './routes/post-data-model-delivery-handler';
+import { postRefreshDataModelDeliveryHandler } from './routes/post-refresh-data-model-delivery-handler';
+
+/**
+ * Creates the data-model deliveries router (mounted at /api/data/data-model-deliveries).
+ */
+export const createDataModelDeliveriesRouter = (): Router => {
+  const router = Router();
+  router.get('/', getDataModelDeliveriesHandler);
+  router.get('/preview', getDataModelDeliveryPreviewHandler);
+  router.post('/', postDataModelDeliveryHandler);
+  router.post('/:id/refresh', postRefreshDataModelDeliveryHandler);
+  return router;
+};

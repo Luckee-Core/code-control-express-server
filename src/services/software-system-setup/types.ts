@@ -2,6 +2,8 @@ import type { RepoType } from '../../model/software-system-repo';
 
 export type RepoTemplateConfig = {
   repoType: RepoType;
+  /** repo_roles.key stored on the created repo. */
+  role: string;
   templateEnvKey: string;
   readNamePattern: () => string;
 };

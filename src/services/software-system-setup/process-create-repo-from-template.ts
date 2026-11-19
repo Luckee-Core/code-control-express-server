@@ -73,6 +73,7 @@ export const processCreateRepoFromTemplate = async (input: {
     customer_id: project.customer_id,
     software_system_id: projectId,
     repo_type: config.repoType,
+    role: config.role,
     name: newRepoName,
     repo_url: result.repo_url,
     clone_url: result.clone_url,

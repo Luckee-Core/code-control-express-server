@@ -12,3 +12,4 @@ export {
   mergePullRequest,
 } from './pull-requests';
 export type { GithubPullRequest } from './pull-requests';
+export { getPullRequestBody, updatePullRequestBody } from './update-pull-request-body';

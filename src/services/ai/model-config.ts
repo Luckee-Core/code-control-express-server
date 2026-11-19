@@ -18,6 +18,12 @@ const CONFIGS: Record<string, ModelConfig> = {
     maxTokens: 64000,
     effort: 'high',
   },
+  /** Ticket build plan: shared contract + per-repo plans (ticket builds ADR). */
+  ticket_build_plan: {
+    model: DEFAULT_CLAUDE_MODEL,
+    maxTokens: 32000,
+    effort: 'high',
+  },
 };
 
 /**

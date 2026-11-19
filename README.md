@@ -47,6 +47,11 @@ curl http://localhost:3010/api/health   # storage: "ok", database: "ok"
 | POST | `/api/data/projects/:id/project-setup/link-existing-repo` | Link existing GitHub repo |
 | POST | `/api/studio-seed/import-to-local` | Export from configured canonical base URL → `STORAGE_IMPORT_TARGET_URL` (default `http://127.0.0.1:3080`) |
 | POST | `/api/admin/temp-import-from-laptop-storage` | Temp laptop → studio copy (only when `TEMP_MIGRATION_ENABLED=true`) |
+| GET, POST | `/api/data/ticket-builds` | List (`?software_system_id=` or `?ops_ticket_id=`) / start a build for an ops ticket (202, plans in background) |
+| GET, PATCH | `/api/data/ticket-builds/:id` | Get (polling: syncs agents and PRs) / edit the shared contract |
+| POST | `/api/data/ticket-builds/:id/revise`, `/:id/start` | Re-plan with feedback / approve and start one Cursor agent per repo |
+| GET, PATCH | `/api/data/ticket-build-repos` | Repos of a build (`?ticket_build_id=`) / edit one repo's plan or include toggle (`/:id`) |
+| GET | `/api/data/ticket-build-ai-exchanges` | AI ledger for a build (`?ticket_build_id=`) |
 
 ## GitHub repo creation
 

@@ -17,6 +17,7 @@ export const buildSystemPrompt = (conventionsText: string): string =>
     '- `why_needed` explains, in one or two sentences, which part of the core workflow breaks without the table.',
     '- Seeding is out of scope. Do not propose seed data, seed scripts, initial rows or seeded catalog tables, and do not raise seeding in `open_questions` or `summary`. A small fixed set of values is an enum column; a list the user manages over time is a normal table that starts empty.',
     '- Migrations, model files and data functions are generated later from your proposal; do not discuss them.',
+    '- Do not propose documentation or Markdown (.md) files (README, docs, ADRs, CLAUDE.md, AGENTS.md); a separate README agent owns them.',
     '- Use `open_questions` for decisions the user should make; do not guess silently on something that changes the schema.',
     '- When the user gives revision feedback, apply it to the previous proposal and keep everything else stable (same names unless the feedback asks for a rename).',
     '',

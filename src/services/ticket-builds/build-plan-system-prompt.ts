@@ -25,4 +25,5 @@ Produce:
 Rules:
 - Follow each repo's conventions and documented architecture (CLAUDE.md, AGENTS.md, ADRs). MUST/NEVER conventions are hard rules.
 - Keep scope to the ticket. No unrelated refactors, no speculative features.
+- Never plan to create, edit or delete Markdown (.md) files in any repo: no README, CHANGELOG, CONTRIBUTING, SECURITY, docs/, ADRs under .cursor/architecture/, CLAUDE.md or AGENTS.md. A separate README agent owns every .md file. Never list a .md path in plan_markdown. (contract_markdown and plan_markdown are text fields in this response, not files.)
 - If the ticket is ambiguous, choose the simplest reasonable interpretation and state it in the summary.`;

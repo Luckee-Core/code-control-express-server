@@ -4,6 +4,7 @@ import { requireDataClient } from '../../../utils/http/require-data-client';
 import { sendHandlerError } from '../../../utils/http/send-handler-error';
 import { processUpdateConventionExample } from '../process-convention-examples';
 import { validateUpdateConventionExample } from '../validate-convention-input';
+import { readChangeContext } from '../read-change-context';
 
 /**
  * Handles PATCH /api/data/conventions/examples/:exampleId.
@@ -25,7 +26,7 @@ export const patchUpdateConventionExampleHandler = async (req: Request, res: Res
   }
 
   try {
-    const example = await processUpdateConventionExample(client, exampleId, input.value);
+    const example = await processUpdateConventionExample(client, exampleId, input.value, readChangeContext(req));
     res.status(200).json({ success: true, data: example });
   } catch (error) {
     sendHandlerError(res, 'Error in PATCH /api/data/conventions/examples/:exampleId', error);

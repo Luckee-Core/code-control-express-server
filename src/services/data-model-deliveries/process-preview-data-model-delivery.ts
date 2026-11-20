@@ -24,6 +24,6 @@ export const processPreviewDataModelDelivery = async (
     throw new ProposalRequestError(409, `This project has no ${input.role} repo yet`);
   }
   const head = await readRepoHead(repo);
-  const { files, findings } = await renderDeliveryFiles({ kind: input.kind, role: input.role, inputs, head });
-  return { role: input.role, repo_full_name: head.full_name, base_branch: head.base_branch, files, findings };
+  const { files, findings, template } = await renderDeliveryFiles({ client, kind: input.kind, role: input.role, inputs, head });
+  return { role: input.role, repo_full_name: head.full_name, base_branch: head.base_branch, files, findings, template };
 };

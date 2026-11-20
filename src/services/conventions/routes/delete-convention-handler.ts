@@ -3,6 +3,7 @@ import { readRouteParam } from '../../../utils/http/read-route-param';
 import { requireDataClient } from '../../../utils/http/require-data-client';
 import { sendHandlerError } from '../../../utils/http/send-handler-error';
 import { processDeleteConvention } from '../process-delete-convention';
+import { readChangeContext } from '../read-change-context';
 
 /**
  * Handles DELETE /api/data/conventions/:id.
@@ -18,7 +19,7 @@ export const deleteConventionHandler = async (req: Request, res: Response): Prom
   }
   console.log('📥 DELETE /api/data/conventions/:id', { id });
   try {
-    const deleted = await processDeleteConvention(client, id);
+    const deleted = await processDeleteConvention(client, id, readChangeContext(req));
     if (!deleted) {
       res.status(404).json({ success: false, error: 'Convention not found' });
       return;

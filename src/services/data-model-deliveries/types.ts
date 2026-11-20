@@ -16,4 +16,6 @@ export type DeliveryPreview = {
   base_branch: string;
   files: RenderedFile[];
   findings: RenderFinding[];
+  /** Template repo and commit the files were rendered with. */
+  template: { repo: string; sha: string };
 };

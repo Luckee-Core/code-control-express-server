@@ -65,3 +65,18 @@ export const listDirectoryNames = async (ref: GithubRepoRef, path: string, at: s
   }
   return Array.isArray(result.data) ? result.data.filter((item) => item.type === 'file').map((item) => item.name) : [];
 };
+
+/**
+ * The commit a branch points at, or null when the branch does not exist.
+ */
+export const getBranchHeadSha = async (ref: GithubRepoRef, branch: string): Promise<string | null> => {
+  const result = await requestGithub<{ object: { sha: string } }>(
+    'GET',
+    `${repoPath(ref.owner, ref.repo)}/git/ref/heads/${branch.split('/').map(encodeURIComponent).join('/')}`,
+  );
+  if (!result.ok) {
+    if (result.status === 404) return null;
+    throw new Error(result.error);
+  }
+  return result.data.object.sha;
+};

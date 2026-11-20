@@ -3,6 +3,7 @@ import { readRouteParam } from '../../../utils/http/read-route-param';
 import { requireDataClient } from '../../../utils/http/require-data-client';
 import { sendHandlerError } from '../../../utils/http/send-handler-error';
 import { processDeleteConventionExample } from '../process-convention-examples';
+import { readChangeContext } from '../read-change-context';
 
 /**
  * Handles DELETE /api/data/conventions/examples/:exampleId.
@@ -17,7 +18,7 @@ export const deleteConventionExampleHandler = async (req: Request, res: Response
     return;
   }
   try {
-    const deleted = await processDeleteConventionExample(client, exampleId);
+    const deleted = await processDeleteConventionExample(client, exampleId, readChangeContext(req));
     if (!deleted) {
       res.status(404).json({ success: false, error: 'Example not found' });
       return;

@@ -3,6 +3,7 @@ import { requireDataClient } from '../../../utils/http/require-data-client';
 import { sendHandlerError } from '../../../utils/http/send-handler-error';
 import { processCreateConvention } from '../process-create-convention';
 import { readRoleKeys, validateCreateConvention } from '../validate-convention-input';
+import { readChangeContext } from '../read-change-context';
 
 /**
  * Handles POST /api/data/conventions.
@@ -20,7 +21,7 @@ export const postCreateConventionHandler = async (req: Request, res: Response): 
 
   console.log('📥 POST /api/data/conventions', { key: input.value.key });
   try {
-    const detail = await processCreateConvention(client, input.value, roleKeys.value);
+    const detail = await processCreateConvention(client, input.value, roleKeys.value, readChangeContext(req));
     res.status(201).json({ success: true, data: detail });
   } catch (error) {
     sendHandlerError(res, 'Error in POST /api/data/conventions', error);

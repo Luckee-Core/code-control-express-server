@@ -4,6 +4,7 @@ import { requireDataClient } from '../../../utils/http/require-data-client';
 import { sendHandlerError } from '../../../utils/http/send-handler-error';
 import { processCreateConventionExample } from '../process-convention-examples';
 import { validateCreateConventionExample } from '../validate-convention-input';
+import { readChangeContext } from '../read-change-context';
 
 /**
  * Handles POST /api/data/conventions/:id/examples.
@@ -25,7 +26,7 @@ export const postCreateConventionExampleHandler = async (req: Request, res: Resp
   }
 
   try {
-    const example = await processCreateConventionExample(client, input.value);
+    const example = await processCreateConventionExample(client, input.value, readChangeContext(req));
     if (!example) {
       res.status(404).json({ success: false, error: 'Convention not found' });
       return;

@@ -34,6 +34,8 @@ export type CreateConventionInput = {
   check_kind?: ConventionCheckKind;
   check_config?: Record<string, unknown> | null;
   sort_order?: number;
+  /** Repo roles to link in the same transaction (recorded on the ledger's create row). */
+  role_keys?: string[];
 };
 
 export type UpdateConventionInput = {

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { deleteConventionExampleHandler } from './routes/delete-convention-example-handler';
 import { deleteConventionHandler } from './routes/delete-convention-handler';
 import { deleteConventionSourceHandler } from './routes/delete-convention-source-handler';
+import { getConventionChangesHandler } from './routes/get-convention-changes-handler';
 import { getConventionDetailHandler } from './routes/get-convention-detail-handler';
 import { getConventionOptionsHandler } from './routes/get-convention-options-handler';
 import { getConventionSnapshotByIdHandler } from './routes/get-convention-snapshot-by-id-handler';
@@ -33,6 +34,7 @@ export const createConventionsRouter = (): Router => {
   router.get('/vocabulary', getConventionVocabularyHandler);
   router.post('/ai-context/preview', postPreviewAiContextHandler);
   router.post('/ai-context/snapshots', postCreateAiContextSnapshotHandler);
+  router.get('/changes', getConventionChangesHandler);
   router.get('/snapshots', getConventionSnapshotsHandler);
   router.get('/snapshots/:snapshotId', getConventionSnapshotByIdHandler);
   router.get('/snapshots/:snapshotId/uses', getConventionSnapshotUsesHandler);
@@ -43,6 +45,7 @@ export const createConventionsRouter = (): Router => {
   router.get('/:id', getConventionDetailHandler);
   router.patch('/:id', patchUpdateConventionHandler);
   router.delete('/:id', deleteConventionHandler);
+  router.get('/:id/changes', getConventionChangesHandler);
   router.put('/:id/roles', putReplaceConventionRolesHandler);
   router.post('/:id/examples', postCreateConventionExampleHandler);
   router.post('/:id/sources', postCreateConventionSourceHandler);

@@ -1,7 +1,6 @@
 import type { SoftwareSystemRepo } from '../../model/software-system-repo';
 import { parseGithubRepoUrl } from '../../utils/parse-github-repo-url';
-import { CRUD_WIRING_PATHS, type CodegenRole, type CrudRepoState, type RepoRenderState } from '../codegen';
-import { getDefaultBranchHead, getFileText, listDirectoryNames, listTreePaths, type GithubRepoRef } from '../github';
+import { getDefaultBranchHead, type GithubRepoRef } from '../github';
 import { ProposalRequestError } from '../data-model-proposals/proposal-request-error';
 
 /** A repo's default branch head. */
@@ -32,28 +31,14 @@ export const readRepoHead = async (repo: SoftwareSystemRepo): Promise<RepoHead> 
 };
 
 /**
- * What the data-model renderer needs: migrations list, model barrel, seed table list.
+ * Default branch head of a repo given as owner/repo.
  */
-export const readModelRenderState = async (head: RepoHead, role: CodegenRole): Promise<RepoRenderState> => {
-  const [migrationFileNames, modelBarrel, seedTableNames] = await Promise.all([
-    role === 'storage' ? listDirectoryNames(head.ref, 'migrations', head.base_sha) : Promise.resolve([]),
-    getFileText(head.ref, 'src/model/index.ts', head.base_sha),
-    role === 'storage' ? getFileText(head.ref, 'src/services/storage/seed-table-names.ts', head.base_sha) : Promise.resolve(null),
-  ]);
-  return { migration_file_names: migrationFileNames, model_barrel: modelBarrel, seed_table_names: seedTableNames };
-};
-
-/**
- * What the CRUD renderer needs: every path (support files are written only when missing)
- * and the wiring files it merges into.
- */
-export const readCrudRenderState = async (head: RepoHead, role: CodegenRole): Promise<CrudRepoState> => {
-  const [paths, ...contents] = await Promise.all([
-    listTreePaths(head.ref, head.base_sha),
-    ...CRUD_WIRING_PATHS[role].map((path) => getFileText(head.ref, path, head.base_sha)),
-  ]);
-  return {
-    paths: paths as Set<string>,
-    wiring: Object.fromEntries(CRUD_WIRING_PATHS[role].map((path, index) => [path, contents[index] as string | null])),
-  };
+export const readRepoHeadByFullName = async (fullName: string): Promise<RepoHead> => {
+  const [owner, repo] = fullName.split('/');
+  if (!owner || !repo) throw new ProposalRequestError(400, `Invalid repo name: ${fullName}`);
+  const ref = { owner, repo };
+  const head = await getDefaultBranchHead(ref);
+  if (!head.ok) throw new ProposalRequestError(502, `${fullName}: ${head.error}`);
+  if (!head.head_sha) throw new ProposalRequestError(409, `${fullName} has no commits yet`);
+  return { ref, full_name: fullName, base_branch: head.branch, base_sha: head.head_sha };
 };

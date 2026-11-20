@@ -8,6 +8,10 @@ export type GithubPullRequest = {
   merged: boolean;
   /** Branch the PR was opened from. */
   head_ref: string;
+  head_sha: string;
+  base_ref: string;
+  /** Squash/merge commit on the base branch once merged. */
+  merge_commit_sha: string | null;
 };
 
 type RawPullRequest = {
@@ -16,7 +20,9 @@ type RawPullRequest = {
   state: 'open' | 'closed';
   merged?: boolean;
   merged_at?: string | null;
-  head?: { ref?: string };
+  merge_commit_sha?: string | null;
+  head?: { ref?: string; sha?: string };
+  base?: { ref?: string };
 };
 
 const toPullRequest = (raw: RawPullRequest): GithubPullRequest => ({
@@ -25,6 +31,9 @@ const toPullRequest = (raw: RawPullRequest): GithubPullRequest => ({
   state: raw.state,
   merged: Boolean(raw.merged ?? raw.merged_at),
   head_ref: raw.head?.ref ?? '',
+  head_sha: raw.head?.sha ?? '',
+  base_ref: raw.base?.ref ?? '',
+  merge_commit_sha: raw.merge_commit_sha ?? null,
 });
 
 /**
@@ -137,4 +146,52 @@ export const getPullRequest = async (ref: GithubRepoRef, number: number): Promis
   const result = await requestGithub<RawPullRequest>('GET', `${repoPath(ref.owner, ref.repo)}/pulls/${number}`);
   if (!result.ok) throw new Error(result.error);
   return toPullRequest(result.data);
+};
+
+/**
+ * Closes a pull request without merging, optionally leaving a comment first.
+ */
+export const closePullRequest = async (input: { ref: GithubRepoRef; number: number; comment?: string }): Promise<void> => {
+  const base = repoPath(input.ref.owner, input.ref.repo);
+  if (input.comment?.trim()) {
+    const commented = await requestGithub('POST', `${base}/issues/${input.number}/comments`, { body: input.comment.trim() });
+    if (!commented.ok) console.warn('⚠️ [github] Could not comment before closing', { pr: input.number, error: commented.error });
+  }
+  const result = await requestGithub('PATCH', `${base}/pulls/${input.number}`, { state: 'closed' });
+  if (!result.ok) throw new Error(result.error);
+};
+
+/**
+ * Adds a comment to a pull request (best effort).
+ */
+export const commentOnPullRequest = async (ref: GithubRepoRef, number: number, body: string): Promise<void> => {
+  const result = await requestGithub('POST', `${repoPath(ref.owner, ref.repo)}/issues/${number}/comments`, { body });
+  if (!result.ok) console.warn('⚠️ [github] Could not comment', { pr: number, error: result.error });
+};
+
+export type GithubCompareFile = {
+  filename: string;
+  status: string;
+  additions: number;
+  deletions: number;
+  /** Unified diff hunk text (absent for binary or very large files). */
+  patch: string | null;
+};
+
+/**
+ * Files changed between two commits (GitHub compare), with patches.
+ */
+export const compareCommits = async (ref: GithubRepoRef, base: string, head: string): Promise<GithubCompareFile[]> => {
+  const result = await requestGithub<{ files?: Array<{ filename: string; status: string; additions: number; deletions: number; patch?: string }> }>(
+    'GET',
+    `${repoPath(ref.owner, ref.repo)}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`,
+  );
+  if (!result.ok) throw new Error(result.error);
+  return (result.data.files ?? []).map((file) => ({
+    filename: file.filename,
+    status: file.status,
+    additions: file.additions,
+    deletions: file.deletions,
+    patch: file.patch ?? null,
+  }));
 };

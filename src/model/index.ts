@@ -57,3 +57,12 @@ export * from './ticket-build-repo';
 export * from './ticket-build-ai-exchange';
 export * from './ops-ticket';
 export * from './setup-preset';
+export type {
+  ConventionChange,
+  ConventionChangeType,
+  ConventionChangeSourceType,
+  ConventionChangeStatus,
+  ConventionChangeVerdict,
+  ConventionChangeContext,
+  ListConventionChangesFilter,
+} from './convention-change';

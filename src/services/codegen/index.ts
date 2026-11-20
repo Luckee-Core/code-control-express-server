@@ -1,7 +1,13 @@
-export { renderDataModelFiles, highestMigrationNumber } from './render-data-model-files';
 export { checkRenderedFiles } from './check-rendered-files';
 export type { FileCheckConvention } from './check-rendered-files';
 export { toPascalCase, toKebabCase } from './naming';
-export type { CodegenRole, CodegenVocabulary, RenderedFile, RenderFinding, RepoRenderState } from './types';
-export { renderCrudFiles, CRUD_WIRING_PATHS } from './render-crud-files';
-export type { CrudRepoState } from './render-crud-files';
+export type { CodegenRole, CodegenVocabulary, RenderedFile, RenderFinding } from './types';
+export { buildCodegenContext } from './engine/build-codegen-context';
+export type { CodegenContext } from './engine/build-codegen-context';
+export { renderWithTemplates, renderMergePaths, CodegenTemplateError } from './engine/render-with-templates';
+export type { EngineRenderedFile, EngineRenderResult } from './engine/render-with-templates';
+export { loadTemplateSource, loadTemplateSourceFromDirectory } from './engine/load-template-source';
+export { renderForRepo, resolveTemplatePin, readCodegenRepoState } from './engine/render-for-repo';
+export type { RenderForRepoResult, TargetRepoHead, TemplatePin } from './engine/render-for-repo';
+export { resolveTemplateRepo, listTemplateRepos } from './engine/resolve-template-repo';
+export type { CodegenKind, CodegenManifest, CodegenRepoState, ManifestFile, TemplateSource } from './engine/types';

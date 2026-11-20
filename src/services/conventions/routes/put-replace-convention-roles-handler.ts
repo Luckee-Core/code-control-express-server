@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { logHandlerError } from '../../../utils/http/log-handler-error';
 import { requireDataClient } from '../../../utils/http/require-data-client';
 import { processReplaceConventionRoles } from '../process-replace-convention-roles';
+import { readChangeContext } from '../read-change-context';
 
 /**
  * Handles PUT /api/data/conventions/:id/roles.
@@ -23,7 +24,7 @@ export const putReplaceConventionRolesHandler = async (req: Request, res: Respon
 
   console.log('📥 PUT /api/data/conventions/:id/roles', { id, count: role_keys.length });
   try {
-    const roles = await processReplaceConventionRoles(client, id, role_keys);
+    const roles = await processReplaceConventionRoles(client, id, role_keys, readChangeContext(req));
     res.status(200).json({ success: true, data: roles });
   } catch (error) {
     logHandlerError('Error in PUT /api/data/conventions/:id/roles', error);

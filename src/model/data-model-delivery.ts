@@ -27,8 +27,24 @@ export type DataModelDelivery = {
   status: DataModelDeliveryStatus;
   files: DataModelDeliveryFile[];
   error: string | null;
+  /** Template repo (owner/repo) and commit whose codegen templates rendered this PR. */
+  template_repo: string | null;
+  template_sha: string | null;
+  /** After a template change merges: does re-rendering reproduce what the PR agent committed? */
+  convergence: DataModelDeliveryConvergence | null;
+  convergence_detail: DataModelDeliveryConvergenceDetail | null;
+  convergence_checked_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type DataModelDeliveryConvergence = 'converged' | 'diverged';
+
+export type DataModelDeliveryConvergenceDetail = {
+  template_change_id: string;
+  template_sha: string;
+  /** Paths whose re-rendered content differs from the PR head. */
+  differing_paths: string[];
 };
 
 export type CreateDataModelDeliveryInput = {
@@ -50,4 +66,9 @@ export type UpdateDataModelDeliveryInput = {
   status?: DataModelDeliveryStatus;
   files?: DataModelDeliveryFile[];
   error?: string | null;
+  template_repo?: string | null;
+  template_sha?: string | null;
+  convergence?: DataModelDeliveryConvergence | null;
+  convergence_detail?: DataModelDeliveryConvergenceDetail | null;
+  convergence_checked_at?: string | null;
 };

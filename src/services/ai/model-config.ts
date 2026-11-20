@@ -24,6 +24,30 @@ const CONFIGS: Record<string, ModelConfig> = {
     maxTokens: 32000,
     effort: 'high',
   },
+  /** PR agent: edits to one project PR from feedback. */
+  pr_agent: {
+    model: DEFAULT_CLAUDE_MODEL,
+    maxTokens: 64000,
+    effort: 'high',
+  },
+  /** Convention agent: proposed convention changes from an approved PR change. */
+  convention_agent: {
+    model: DEFAULT_CLAUDE_MODEL,
+    maxTokens: 32000,
+    effort: 'high',
+  },
+  /** Template agent, pass 1: which template repo files it needs to read. */
+  template_agent_select: {
+    model: DEFAULT_CLAUDE_MODEL,
+    maxTokens: 8000,
+    effort: 'medium',
+  },
+  /** Template agent, pass 2: edits to codegen templates, scaffold and ADRs. */
+  template_agent: {
+    model: DEFAULT_CLAUDE_MODEL,
+    maxTokens: 64000,
+    effort: 'high',
+  },
 };
 
 /**

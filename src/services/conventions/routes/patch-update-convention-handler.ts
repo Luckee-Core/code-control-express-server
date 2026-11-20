@@ -4,6 +4,7 @@ import { requireDataClient } from '../../../utils/http/require-data-client';
 import { sendHandlerError } from '../../../utils/http/send-handler-error';
 import { processUpdateConvention } from '../process-update-convention';
 import { readRoleKeys, validateUpdateConvention } from '../validate-convention-input';
+import { readChangeContext } from '../read-change-context';
 
 /**
  * Handles PATCH /api/data/conventions/:id (fields and/or role_keys).
@@ -26,7 +27,7 @@ export const patchUpdateConventionHandler = async (req: Request, res: Response):
 
   console.log('📥 PATCH /api/data/conventions/:id', { id });
   try {
-    const detail = await processUpdateConvention(client, id, input.value, roleKeys.value);
+    const detail = await processUpdateConvention(client, id, input.value, roleKeys.value, readChangeContext(req));
     if (!detail) {
       res.status(404).json({ success: false, error: 'Convention not found' });
       return;

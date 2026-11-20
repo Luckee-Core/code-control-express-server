@@ -102,7 +102,7 @@ const deliverToRepo = async (
         );
       }
     }
-    const { files, findings } = await renderDeliveryFiles({ kind, role, inputs, head: snapshot });
+    const { files, findings, template } = await renderDeliveryFiles({ client, kind, role, inputs, head: snapshot });
     const errors = findings.filter((finding) => finding.severity === 'error');
     if (errors.length > 0) {
       return fail(`Rendered files break ${errors.length} MUST/NEVER rules: ${errors.map((finding) => `${finding.path} (${finding.convention_key})`).join('; ')}`);
@@ -156,6 +156,11 @@ const deliverToRepo = async (
         status,
         files: files.map((file) => ({ path: file.path, action: file.action })),
         error: note,
+        template_repo: template.repo,
+        template_sha: template.sha,
+        convergence: null,
+        convergence_detail: null,
+        convergence_checked_at: null,
       })) ?? delivery
     );
   } catch (error) {

@@ -1,4 +1,5 @@
-const GITHUB_API = 'https://api.github.com';
+/** GitHub REST base URL (GITHUB_API_URL overrides it, e.g. GitHub Enterprise or a local test double). */
+const githubApiUrl = (): string => (process.env.GITHUB_API_URL?.trim() || 'https://api.github.com').replace(/\/$/, '');
 
 export type GithubResponse<T> =
   | { ok: true; status: number; data: T }
@@ -18,7 +19,7 @@ export const requestGithub = async <T>(
     return { ok: false, status: 0, error: 'GITHUB_PERSONAL_ACCESS_TOKEN is not set' };
   }
   try {
-    const response = await fetch(`${GITHUB_API}${path}`, {
+    const response = await fetch(`${githubApiUrl()}${path}`, {
       method,
       headers: {
         Accept: 'application/vnd.github+json',

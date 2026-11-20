@@ -43,5 +43,6 @@ Requirements:
 - Implement this repository's plan completely; stay within its scope.
 - Use the contract's names, shapes and paths exactly, so the other repositories' changes fit.
 - Add or update tests only where this repository already has them for similar code.
+- Do not create, edit or delete any Markdown (.md) file: no README, CHANGELOG, CONTRIBUTING, SECURITY, docs/, ADRs, CLAUDE.md or AGENTS.md. Read them for context only; a separate README agent owns them. If the plan mentions a .md file, skip that part and say so in the pull request body.
 - Open a pull request titled "${build.ops_ticket_title} (${repo.role})". In the body, reference ticket ${build.ops_ticket_id} and Code Control build ${build.id}, and list any assumptions you made.`;
 };

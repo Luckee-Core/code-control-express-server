@@ -25,16 +25,25 @@ export const approvePrAgentRun = async (client: CanonicalDataClient, run: AgentR
   }
 
   const feedback = String(run.input.feedback ?? '');
+  const deletedPaths = edits.filter((edit) => edit.after_content === null).map((edit) => edit.path);
   const commitSha = await commitFilesToBranch({
     ref: pr.ref,
     baseSha: pr.head_sha,
     branch: pr.delivery.branch,
-    message: `PR feedback: ${titleFrom(feedback, 60)}\n\n${run.summary}\n\nApplied by Code Control PR agent run ${run.id}.`,
+    message: `PR feedback: ${titleFrom(feedback, 60)}\n\n${run.summary}${deletedPaths.length > 0 ? `\n\nDeleted ${deletedPaths.length} file${deletedPaths.length === 1 ? '' : 's'}.` : ''}\n\nApplied by Code Control PR agent run ${run.id}.`,
     files: edits.map((edit) => ({ path: edit.path, content: edit.after_content })),
   });
-  await updateDataModelDelivery(client, pr.delivery.id, { commit_sha: commitSha });
+  const gone = new Set(deletedPaths);
+  await updateDataModelDelivery(client, pr.delivery.id, {
+    commit_sha: commitSha,
+    ...(gone.size > 0 ? { files: pr.delivery.files.filter((file) => !gone.has(file.path)) } : {}),
+  });
   if (pr.delivery.pr_number) {
-    await commentOnPullRequest(pr.ref, pr.delivery.pr_number, `**Code Control PR agent** applied feedback in ${commitSha.slice(0, 7)}:\n\n> ${feedback.trim().split('\n').join('\n> ')}\n\n${run.summary}`);
+    await commentOnPullRequest(
+      pr.ref,
+      pr.delivery.pr_number,
+      `**Code Control PR agent** applied feedback in ${commitSha.slice(0, 7)}:\n\n> ${feedback.trim().split('\n').join('\n> ')}\n\n${run.summary}${deletedPaths.length > 0 ? `\n\nDeleted:\n${deletedPaths.map((path) => `- \`${path}\``).join('\n')}` : ''}`,
+    );
   }
 
   const approved = await updateAgentRun(

@@ -7,6 +7,7 @@ import type { AgentRun, AgentRunFinding, ConventionChangePropagationStatus, Temp
 import type { ConventionChange } from '../../model/convention-change';
 import { callAgentAi } from '../agent-runs/call-agent-ai';
 import { syntaxErrors } from '../agent-runs/check-edited-files';
+import { findDanglingImports } from '../agent-runs/find-dangling-imports';
 import { fenceFile, keepTrailingNewline } from '../agent-runs/file-text';
 import { MAX_PROMPT_FILE_CHARS, MAX_TEMPLATE_FILES_TO_READ, templateBranchName, titleFrom } from '../agent-runs/config';
 import { loadFileChecks } from '../agent-runs/load-file-checks';
@@ -85,12 +86,16 @@ export const findRunTemplateChange = async (client: CanonicalDataClient, run: Ag
 };
 
 /** Template source with edits applied (codegen/ files only). */
-const withEdits = (source: TemplateSource, edits: Array<{ path: string; content: string }>): TemplateSource => {
+const withEdits = (source: TemplateSource, edits: Array<{ path: string; content: string | null }>): TemplateSource => {
   const files = new Map(source.files);
   let manifest: CodegenManifest = source.manifest;
   for (const edit of edits) {
     if (!edit.path.startsWith('codegen/')) continue;
     const relative = edit.path.slice('codegen/'.length);
+    if (edit.content === null) {
+      files.delete(relative);
+      continue;
+    }
     files.set(relative, edit.content);
     if (relative === 'manifest.json') manifest = JSON.parse(edit.content) as CodegenManifest;
   }
@@ -233,10 +238,30 @@ const runForRepo = async (
       for (const error of syntaxErrors(edit.path, edit.content)) findings.push({ severity: 'error', path: edit.path, message: `Syntax: ${error}`, convention_key: 'agent.syntax' });
     }
   }
+  // Deletes: existing files only, never the manifest, never a file the same answer edits.
+  const editedPaths = new Set(edits.map((edit) => edit.path));
+  const deletes = [...new Map((answer.deletes ?? []).map((item) => [item.path, item])).values()].filter((item) => {
+    const reason = !paths.has(item.path)
+      ? 'file does not exist'
+      : item.path === 'codegen/manifest.json' || FORBIDDEN_PATH.test(item.path) || item.path.includes('..')
+        ? 'path is not allowed'
+        : editedPaths.has(item.path)
+          ? 'the same answer also edits this file'
+          : '';
+    if (reason) findings.push({ severity: 'warning', path: item.path, message: `Delete dropped: ${reason}`, convention_key: 'agent.scope' });
+    return !reason;
+  });
+  const fileChanges = [...edits.map((edit) => ({ path: edit.path, content: edit.content as string | null })), ...deletes.map((item) => ({ path: item.path, content: null }))];
+  const deletedPaths = new Set(deletes.map((item) => item.path));
+  const remainingScaffold = [...currentContent.entries()]
+    .filter(([path]) => !editedPaths.has(path) && !deletedPaths.has(path) && templateFileArea(path) === 'scaffold')
+    .map(([path, content]) => ({ path, content }));
+  findings.push(...findDanglingImports([...deletedPaths], [...remainingScaffold, ...edits.filter((edit) => templateFileArea(edit.path) === 'scaffold')]));
+
   if (source && !findings.some((finding) => finding.path === 'codegen/manifest.json' && finding.severity === 'error')) {
-    findings.push(...renderTemplateSample({ source: withEdits(source, edits), role: target.role_key, sample, checks }).findings);
+    findings.push(...renderTemplateSample({ source: withEdits(source, fileChanges), role: target.role_key, sample, checks }).findings);
   }
-  if (edits.length === 0) return notNeeded('The agent proposed no effective edits', answer.summary);
+  if (fileChanges.length === 0) return notNeeded('The agent proposed no effective edits', answer.summary);
 
   // Commit and open (or update) the PR.
   const branch = existingChange?.branch ?? templateBranchName(run.id);
@@ -247,18 +272,21 @@ const runForRepo = async (
     baseSha: workSha,
     branch,
     message: `${title}\n\n${answer.summary}\n\nCode Control template agent run ${run.id} (v${run.version}).`,
-    files: edits.map((edit) => ({ path: edit.path, content: edit.content })),
+    files: fileChanges,
   });
   const pullRequest =
     (await findOpenPullRequest(ref, branch)) ??
     (await createPullRequest({ ref, head: branch, base: head.branch, title, body: buildPrBody(run, changes, answer.summary) }));
 
-  const editedFiles: TemplateChangeFile[] = edits.map((edit) => ({ path: edit.path, action: paths.has(edit.path) ? 'update' : 'create', area: templateFileArea(edit.path) }));
+  const editedFiles: TemplateChangeFile[] = [
+    ...edits.map((edit): TemplateChangeFile => ({ path: edit.path, action: paths.has(edit.path) ? 'update' : 'create', area: templateFileArea(edit.path) })),
+    ...deletes.map((item): TemplateChangeFile => ({ path: item.path, action: 'delete', area: templateFileArea(item.path) })),
+  ];
   const mergedFiles = [...new Map([...(existingChange?.files ?? []), ...editedFiles].map((file) => [file.path, file])).values()];
   const changeId = existingChange?.id ?? (await createTemplateChange(client, { role_key: target.role_key, repo_full_name: target.repo, branch, base_branch: head.branch, base_sha: head.head_sha!, title })).id;
   await updateTemplateChange(client, changeId, { head_sha: commitSha, pr_number: pullRequest.number, pr_url: pullRequest.html_url, status: 'open', files: mergedFiles });
   await updateConventionChangePropagations(client, { run_id: run.id, template_repo: target.repo, from_statuses: ['pending'], status: 'in_run' });
-  console.log('✅ [template-agent] Template PR ready', { runId: run.id, repo: target.repo, pr: pullRequest.number, files: edits.length, findings: findings.length });
+  console.log('✅ [template-agent] Template PR ready', { runId: run.id, repo: target.repo, pr: pullRequest.number, files: edits.length, deletes: deletes.length, findings: findings.length });
   return {
     outcome: {
       status: 'pr',
@@ -266,7 +294,10 @@ const runForRepo = async (
       template_change_id: changeId,
       work_sha: workSha,
       commit_sha: commitSha,
-      files: edits.map((edit) => ({ path: edit.path, area: templateFileArea(edit.path), explanation: edit.explanation, convention_keys: edit.convention_keys })),
+      files: [
+        ...edits.map((edit) => ({ path: edit.path, area: templateFileArea(edit.path), explanation: edit.explanation, convention_keys: edit.convention_keys })),
+        ...deletes.map((item) => ({ path: item.path, area: templateFileArea(item.path), explanation: `Deleted. ${item.explanation}`, convention_keys: item.convention_keys })),
+      ],
     },
     findings: findings.map((finding) => ({ ...finding, repo: target.repo })),
   };

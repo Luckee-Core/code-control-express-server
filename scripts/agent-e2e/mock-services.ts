@@ -26,6 +26,31 @@ export class MockGithub {
     return commit;
   }
 
+  /**
+   * Three-way merge of `headSha` into `baseSha`: what the head changed since their common ancestor
+   * (edits, additions and deletions) is applied on top of the base. Returns the merge commit sha.
+   */
+  mergeCommit(fullName: string, baseSha: string, headSha: string, message: string): string {
+    const repo = this.repos.get(fullName)!;
+    const ancestorsOfBase = new Set<string>();
+    for (let cursor: string | undefined = baseSha; cursor; cursor = repo.commits.get(cursor)?.parents[0]) ancestorsOfBase.add(cursor);
+    let ancestor: string | undefined = headSha;
+    while (ancestor && !ancestorsOfBase.has(ancestor)) ancestor = repo.commits.get(ancestor)?.parents[0];
+    const treeOf = (commitSha: string | undefined) => (commitSha ? repo.trees.get(repo.commits.get(commitSha)!.tree)! : new Map<string, string>());
+    const [ancestorTree, headTree] = [treeOf(ancestor), treeOf(headSha)];
+    const tree = new Map(treeOf(baseSha));
+    for (const path of new Set([...ancestorTree.keys(), ...headTree.keys()])) {
+      if (ancestorTree.get(path) === headTree.get(path)) continue;
+      if (headTree.has(path)) tree.set(path, headTree.get(path)!);
+      else tree.delete(path);
+    }
+    const treeSha = sha([...tree.entries()]);
+    repo.trees.set(treeSha, tree);
+    const commitSha = sha({ treeSha, baseSha, headSha, message });
+    repo.commits.set(commitSha, { sha: commitSha, tree: treeSha, parents: [baseSha, headSha], message });
+    return commitSha;
+  }
+
   /** New commit on top of `parent` with files overlaid; returns its sha (refs untouched). */
   commit(fullName: string, parent: string | null, files: Record<string, string>, message: string): string {
     const repo = this.repos.get(fullName)!;
@@ -86,7 +111,10 @@ export class MockGithub {
     if (method === 'POST' && rest === '/git/trees') {
       const base = repo.trees.get(String(body?.base_tree)) ?? new Map<string, string>();
       const tree = new Map(base);
-      for (const entry of (body?.tree as Array<{ path: string; content: string }>) ?? []) tree.set(entry.path, entry.content);
+      for (const entry of (body?.tree as Array<{ path: string; content?: string; sha?: string | null }>) ?? []) {
+        if (entry.sha === null) tree.delete(entry.path);
+        else tree.set(entry.path, entry.content ?? '');
+      }
       const treeSha = sha([...tree.entries()]);
       repo.trees.set(treeSha, tree);
       return { status: 201, json: { sha: treeSha } };
@@ -130,8 +158,7 @@ export class MockGithub {
       }
       if (method === 'PUT' && m[2]) {
         if (pull.state !== 'open') return { status: 405, json: { message: 'Pull Request is not mergeable' } };
-        const headTree = this.treeAt(fullName, pull.head)!;
-        const merged = this.commit(fullName, repo.refs.get(pull.base)!, Object.fromEntries(headTree), String(body?.commit_title));
+        const merged = this.mergeCommit(fullName, repo.refs.get(pull.base)!, repo.refs.get(pull.head)!, String(body?.commit_title));
         repo.refs.set(pull.base, merged);
         pull.state = 'closed';
         pull.merged = true;

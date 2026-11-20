@@ -39,13 +39,14 @@ const toPullRequest = (raw: RawPullRequest): GithubPullRequest => ({
 /**
  * Commits files on top of `baseSha` as one commit and points `branch` at it (created, or
  * force-updated so a re-delivery replaces the previous commit). Returns the commit sha.
+ * A file with `content: null` is deleted (a tree entry with `sha: null`).
  */
 export const commitFilesToBranch = async (input: {
   ref: GithubRepoRef;
   baseSha: string;
   branch: string;
   message: string;
-  files: Array<{ path: string; content: string }>;
+  files: Array<{ path: string; content: string | null }>;
 }): Promise<string> => {
   const base = repoPath(input.ref.owner, input.ref.repo);
   const baseCommit = await requestGithub<{ tree: { sha: string } }>('GET', `${base}/git/commits/${input.baseSha}`);
@@ -53,7 +54,11 @@ export const commitFilesToBranch = async (input: {
 
   const tree = await requestGithub<{ sha: string }>('POST', `${base}/git/trees`, {
     base_tree: baseCommit.data.tree.sha,
-    tree: input.files.map((file) => ({ path: file.path, mode: '100644', type: 'blob', content: file.content })),
+    tree: input.files.map((file) =>
+      file.content === null
+        ? { path: file.path, mode: '100644', type: 'blob', sha: null }
+        : { path: file.path, mode: '100644', type: 'blob', content: file.content },
+    ),
   });
   if (!tree.ok) throw new Error(tree.error);
 

@@ -57,6 +57,9 @@ const readTree = (dir: string, skip = ['node_modules', '.git', 'dist', '.next', 
   return files;
 };
 
+const PROCESS_FILE = 'src/services/notes/process-delete-note.ts';
+const TEMPLATE_DELETE = '.cursor/architecture/009-stripe-checkout-one-time-payment.md';
+
 const fenced = (user: string, file: string): string => {
   const start = user.indexOf(`### ${file}\n`);
   if (start === -1) throw new Error(`mock AI: ${file} not in prompt`);
@@ -75,6 +78,8 @@ const aiResponder = ({ system, user }: { system: string; user: string }): unknow
     return {
       summary: 'Reject non-object JSON bodies with 400 before picking fields.',
       edits: [{ path: file, content: content.replace(PICK_LINE, `${VALIDATION_GUARD}${PICK_LINE}`), explanation: 'Validate the body shape (feedback).' }],
+      // The revision also deletes a process file (its handler still imports it, so the dangling-import check fires).
+      deletes: user.includes('Earlier attempt') ? [{ path: PROCESS_FILE, explanation: 'Handlers call the data wrapper directly.' }] : [],
       notes: user.includes('Earlier attempt') ? ['Revised after reviewer response'] : [],
     };
   }
@@ -111,11 +116,12 @@ const aiResponder = ({ system, user }: { system: string; user: string }): unknow
     const edits: Array<{ path: string; content: string; explanation: string; convention_keys: string[] }> = [
       { path: adrPath, content: `${adr}\n- Reject non-object JSON bodies with 400 (\`${NEW_KEY}\`).\n`, explanation: 'Document the rule', convention_keys: [NEW_KEY] },
     ];
+    const deletes = repo === 'tmpl/express-server-template' ? [{ path: TEMPLATE_DELETE, explanation: 'Retired ADR', convention_keys: [NEW_KEY] }] : [];
     if (repo === 'tmpl/express-server-template' && user.includes(NEW_KEY)) {
       const templatePath = 'codegen/crud/express/handler-post.ts.eta';
       edits.push({ path: templatePath, content: fenced(user, templatePath).replace(PICK_LINE, `${VALIDATION_GUARD}${PICK_LINE}`), explanation: 'Generate the guard', convention_keys: [NEW_KEY] });
     }
-    return { summary: 'Templates follow the updated handler conventions.', decision: 'edits', not_needed_reason: '', edits };
+    return { summary: 'Templates follow the updated handler conventions.', decision: 'edits', not_needed_reason: '', edits, deletes };
   }
   throw new Error(`mock AI: unknown system prompt ${system.slice(0, 60)}`);
 };
@@ -220,12 +226,17 @@ const main = async (): Promise<void> => {
     check(revised.data.version === 2, 'revise creates v2');
     pr = await waitForStatus(revised.data.id, ['needs_review', 'failed']);
     check(pr.versions.length === 2 && pr.versions[0].status === 'superseded', 'v1 superseded, versions listed');
+    const deleteEdit = pr.pr.edits.find((edit: any) => edit.path === PROCESS_FILE);
+    check(deleteEdit?.after_content === null && typeof deleteEdit?.before_content === 'string', 'v2 proposes deleting the process file (after_content null)');
+    check(pr.run.findings.some((finding: any) => finding.convention_key === 'agent.dangling_import' && finding.path.endsWith('delete-note-handler.ts')), 'dangling-import check flags the handler that still imports it');
     const prRunId = revised.data.id;
 
     const approvedPr = await request('POST', `/agent-runs/${prRunId}/approve`, { note: 'looks right' });
     check(approvedPr.status === 200 && approvedPr.data.next[0].agent === 'convention' && approvedPr.data.next[0].status === 'draft', `approve commits and creates a convention draft (${approvedPr.error ?? ''})`);
     const branchContent = github.treeAt('acme/acme-express-server', 'code-control/data-access-v1')!.get('src/services/notes/routes/post-note-handler.ts')!;
     check(branchContent.includes(VALIDATION_GUARD), 'edit committed to the PR branch');
+    check(!github.treeAt('acme/acme-express-server', 'code-control/data-access-v1')!.has(PROCESS_FILE), 'deleted file is gone from the PR branch');
+    check(sql(`select count(*) from data_model_deliveries, jsonb_array_elements(files) f where id='${deliveryId}' and f->>'path'='${PROCESS_FILE}'`) === '0', 'delivery file list drops the deleted path');
     check(project.pulls[0].comments.length === 1, 'PR got a comment');
     check(sql(`select commit_sha from data_model_deliveries where id='${deliveryId}'`) === github.repos.get('acme/acme-express-server')!.refs.get('code-control/data-access-v1'), 'delivery commit_sha updated');
 
@@ -278,8 +289,10 @@ const main = async (): Promise<void> => {
     const listed = (await request('GET', '/agent-runs?agent=template')).data.find((run: any) => run.id === templateDraft.id);
     check(listed.template_changes.length === 2, 'runs table row lists both template PRs');
     const diff = await request('GET', `/agent-runs/${templateDraft.id}/template-diff?${repoQuery}`);
-    check(diff.data.length === 2 && diff.data.some((file: any) => file.area === 'codegen') && diff.data.some((file: any) => file.area === 'adr'), 'template diff: codegen + ADR');
-    const adrPatch: string = diff.data.find((file: any) => file.area === 'adr')?.patch ?? '';
+    check(diff.data.length === 3 && diff.data.some((file: any) => file.area === 'codegen') && diff.data.some((file: any) => file.area === 'adr'), 'template diff: codegen + ADR + deleted ADR');
+    check(diff.data.find((file: any) => file.filename === TEMPLATE_DELETE)?.status === 'removed', 'template diff shows the deleted file as removed');
+    check(tmpl.template.template_changes.flatMap((change: any) => change.files).some((file: any) => file.path === TEMPLATE_DELETE && file.action === 'delete'), 'template change records the delete');
+    const adrPatch: string = diff.data.find((file: any) => file.filename === '.cursor/architecture/002-router-factory-and-handler-pattern.md')?.patch ?? '';
     check(adrPatch.includes('+- Reject non-object') && !adrPatch.split('\n').some((line) => line.startsWith('-')), 'ADR with ``` blocks round-trips intact (pure addition)');
     const preview = await request('GET', `/agent-runs/${templateDraft.id}/render-preview?${repoQuery}`);
     check(preview.data.files.length === 1 && preview.data.files[0].after.includes(VALIDATION_GUARD), 'render preview shows the generated handler change');
@@ -288,7 +301,12 @@ const main = async (): Promise<void> => {
     const approvedTmpl = await request('POST', `/agent-runs/${templateDraft.id}/approve`, { note: 'merge' });
     check(approvedTmpl.status === 200 && approvedTmpl.data.run.status === 'approved', `template PR merged (${approvedTmpl.error ?? ''})`);
     check(github.treeAt('tmpl/express-server-template', 'main')!.get('codegen/crud/express/handler-post.ts.eta')!.includes('Body must be a JSON object'), 'template main has the new template');
-    check(sql(`select convergence from data_model_deliveries where id='${deliveryId}'`) === 'converged', 'convergence: merged templates reproduce the reviewer fix');
+    check(!github.treeAt('tmpl/express-server-template', 'main')!.has(TEMPLATE_DELETE), 'deleted template file gone from main after merge');
+    // The templates now generate the guard, but still generate the process file the PR deleted.
+    check(
+      sql(`select convergence || ':' || (convergence_detail->'differing_paths')::text from data_model_deliveries where id='${deliveryId}'`) === `diverged:["${PROCESS_FILE}"]`,
+      'convergence: guard reproduced; the PR-deleted process file is the only difference',
+    );
     check(github.repos.get('tmpl/express-storage-server-template')!.pulls[0].merged, 'storage template PR merged too');
     check(sql(`select string_agg(distinct status, ',' order by status) from convention_change_propagations where run_id='${templateDraft.id}'`) === 'merged,not_needed', 'propagations merged (web not_needed)');
     const lineage = (await request('GET', `/agent-runs/${templateDraft.id}`)).data.lineage.map((run: any) => `${run.agent}:${run.status}`);

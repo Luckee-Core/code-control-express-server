@@ -57,9 +57,9 @@ curl http://localhost:3010/api/health   # storage: "ok", database: "ok"
 
 Three human-gated agents, each with its own run history:
 
-1. **PR agent:** **Update PR** on a delivery (Data access rows) → feedback → proposed edits to that PR only. Approving commits them to the PR branch and creates a convention agent **draft**.
+1. **PR agent:** **Update PR** on a delivery (Data access rows) → feedback → proposed edits to that PR only (change, add or delete PR files; a check flags files that still import a deleted one). Approving commits them to the PR branch and creates a convention agent **draft**.
 2. **Convention agent:** reads the approved PR change and the whole catalog → proposed convention changes, each with a verdict (`new` / `refines` / `conflicts` / `wrong_scope`). You accept, reject or edit each one. Accepted changes are applied through the change ledger (`convention_changes`), and every affected template repo gets a template agent draft.
-3. **Template agent:** one draft collects applied changes, from the convention agent and from manual edits in the Conventions UI, for every template repo they affect. Confirming it edits each affected repo's `codegen/`, scaffold and ADRs and opens one PR per repo (a repo can also come back "no change needed"). Approve merges all of its PRs and checks **convergence**: do the merged templates reproduce the reviewer's PR fix? Deny closes all of them.
+3. **Template agent:** one draft collects applied changes, from the convention agent and from manual edits in the Conventions UI, for every template repo they affect. Confirming it edits each affected repo's `codegen/`, scaffold and ADRs and opens one PR per repo (a repo can also come back "no change needed"). It can also delete files (e.g. a retired codegen template). Approve merges all of its PRs and checks **convergence**: do the merged templates reproduce the reviewer's PR fix? Deny closes all of them.
 
 **Lifecycle (every agent):** `draft` → confirm → `running` → `needs_review` → `approved` (next draft created) / `rejected` / revise (new version). Drafts never start on their own. A worker resumes `running` runs after a restart and sweeps applied changes into template drafts every minute.
 

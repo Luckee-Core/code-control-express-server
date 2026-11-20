@@ -43,10 +43,10 @@ export const runConventionAgent = async (client: CanonicalDataClient, run: Agent
 
   let budget = MAX_PROMPT_FILE_CHARS;
   const diffs = edits.map((edit) => {
-    const diff = unifiedDiff(edit.before_content ?? '', edit.after_content);
+    const diff = unifiedDiff(edit.before_content ?? '', edit.after_content ?? '');
     const text = diff.length > budget ? `${diff.slice(0, Math.max(0, budget))}\n… (truncated)` : diff;
     budget = Math.max(0, budget - text.length);
-    return `### ${edit.path}\n${edit.explanation}\n\`\`\`diff\n${text}\n\`\`\``;
+    return `### ${edit.path}${edit.after_content === null ? ' (deleted)' : ''}\n${edit.explanation}\n\`\`\`diff\n${text}\n\`\`\``;
   });
 
   const userMessage = [

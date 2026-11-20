@@ -117,7 +117,8 @@ export type PrAgentEdit = {
   path: string;
   /** Null when the file is new. */
   before_content: string | null;
-  after_content: string;
+  /** Null when the edit deletes the file. */
+  after_content: string | null;
   explanation: string;
   sort_order: number;
   created_at: string;
@@ -126,7 +127,8 @@ export type PrAgentEdit = {
 export type PrAgentEditInput = {
   path: string;
   before_content: string | null;
-  after_content: string;
+  /** Null deletes the file. */
+  after_content: string | null;
   explanation?: string;
 };
 
@@ -134,7 +136,7 @@ export type TemplateChangeStatus = 'open' | 'merged' | 'closed' | 'failed';
 
 export type TemplateChangeFile = {
   path: string;
-  action: 'create' | 'update';
+  action: 'create' | 'update' | 'delete';
   /** codegen | scaffold | adr */
   area: string;
 };

@@ -66,3 +66,4 @@ export type {
   ConventionChangeContext,
   ListConventionChangesFilter,
 } from './convention-change';
+export type { AiCostSource, AiCostCall } from './ai-cost-call';

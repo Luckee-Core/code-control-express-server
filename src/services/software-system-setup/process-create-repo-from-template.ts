@@ -1,6 +1,6 @@
 import { getSoftwareSystemById } from '../../data/software-systems';
 import { getSoftwareSystemReposBySoftwareSystemId, insertSoftwareSystemRepo } from '../../data/software-system-repos';
-import { parseTemplateEnv, resolveGithubOwner } from '../../utils/github';
+import { describeTemplateEnvKey, readTemplateEnv, resolveGithubOwner } from '../../utils/github';
 import { createRepoFromTemplate } from '../github';
 import type { CanonicalDataClient } from '../canonical-data-client';
 import { slugifyRepoName } from './slugify-repo-name';
@@ -23,11 +23,11 @@ export const processCreateRepoFromTemplate = async (input: {
     return { kind: 'project_not_found' };
   }
 
-  const template = parseTemplateEnv(process.env[config.templateEnvKey]);
+  const template = readTemplateEnv(config.templateEnvKey);
   if (!template) {
     return {
       kind: 'template_missing',
-      error: `${config.templateEnvKey} is not set (expected owner/repo)`,
+      error: `${describeTemplateEnvKey(config.templateEnvKey)} is not set (expected owner/repo)`,
     };
   }
 

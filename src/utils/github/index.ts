@@ -5,3 +5,4 @@ export {
   getGithubOrgOptions,
 } from './get-github-org-options';
 export { parseTemplateEnv } from './parse-template-env';
+export { describeTemplateEnvKey, readTemplateEnv } from './read-template-env';

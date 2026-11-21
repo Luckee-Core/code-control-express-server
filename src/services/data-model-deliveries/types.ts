@@ -19,3 +19,15 @@ export type DeliveryPreview = {
   /** Template repo and commit the files were rendered with. */
   template: { repo: string; sha: string };
 };
+
+/** GET /api/data/data-model-deliveries/screenshot: the template's preview page as a PNG. */
+export type DeliveryScreenshot = {
+  role: CodegenRole;
+  repo_full_name: string;
+  base_branch: string;
+  template: { repo: string; sha: string };
+  /** Viewport in CSS pixels (the PNG is 2x). */
+  width: number;
+  height: number;
+  png_base64: string;
+};

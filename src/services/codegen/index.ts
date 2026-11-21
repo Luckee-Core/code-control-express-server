@@ -5,10 +5,10 @@ export type { CodegenRole, CodegenVocabulary, RenderedFile, RenderFinding } from
 export { buildCodegenContext } from './engine/build-codegen-context';
 export type { CodegenApp, CodegenContext } from './engine/build-codegen-context';
 export type { TablePage } from './table-pages';
-export { renderWithTemplates, renderMergePaths, CodegenTemplateError } from './engine/render-with-templates';
+export { renderWithTemplates, renderMergePaths, renderPreviewHtml, CodegenTemplateError } from './engine/render-with-templates';
 export type { EngineRenderedFile, EngineRenderResult } from './engine/render-with-templates';
 export { loadTemplateSource, loadTemplateSourceFromDirectory } from './engine/load-template-source';
 export { renderForRepo, resolveTemplatePin, readCodegenRepoState } from './engine/render-for-repo';
 export type { RenderForRepoResult, TargetRepoHead, TemplatePin } from './engine/render-for-repo';
 export { resolveTemplateRepo, listTemplateRepos } from './engine/resolve-template-repo';
-export type { CodegenKind, CodegenManifest, CodegenRepoState, ManifestFile, TemplateSource } from './engine/types';
+export type { CodegenKind, CodegenManifest, CodegenRepoState, ManifestFile, ManifestPreview, TemplateSource } from './engine/types';

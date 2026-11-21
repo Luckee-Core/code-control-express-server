@@ -38,6 +38,21 @@ export const renderMergePaths = (source: TemplateSource, kind: CodegenKind, cont
 };
 
 /**
+ * The kind's preview page rendered with the base context, or null when the manifest declares none.
+ */
+export const renderPreviewHtml = (source: TemplateSource, kind: CodegenKind, context: CodegenContext): string | null => {
+  const preview = source.manifest.kinds[kind]?.preview;
+  if (!preview) return null;
+  const text = source.files.get(preview.template);
+  if (text === undefined) throw new CodegenTemplateError(`${source.repo} is missing codegen/${preview.template} (${kind} preview)`);
+  try {
+    return createEta().renderString(text, context);
+  } catch (error) {
+    throw new CodegenTemplateError(`${source.repo}@${source.sha.slice(0, 7)} ${kind} preview: ${error instanceof Error ? error.message : error}`);
+  }
+};
+
+/**
  * Renders one kind (model | crud) for one role from a template source: every manifest entry is
  * rendered per its `each`, written / written-if-missing / merged into the repo's existing file.
  * Merges that can't find their anchor come back as error findings instead of guessed edits.

@@ -75,10 +75,23 @@ export type ManifestFile = {
   error_convention_key?: string;
 };
 
+/**
+ * A standalone HTML page (Eta, rendered with the same context as the files) showing what the
+ * kind generates. Code Control screenshots it for the PR body and the UI. It must be
+ * self-contained: inline CSS, no scripts, no network.
+ */
+export type ManifestPreview = {
+  /** Template path relative to codegen/. */
+  template: string;
+  /** Viewport in CSS pixels (default 1280 x 760). */
+  width?: number;
+  height?: number;
+};
+
 export type CodegenManifest = {
   version: 1;
   role: string;
-  kinds: Partial<Record<CodegenKind, { files: ManifestFile[] }>>;
+  kinds: Partial<Record<CodegenKind, { files: ManifestFile[]; preview?: ManifestPreview }>>;
 };
 
 /** A loaded template set: a repo at one commit (or a local directory for tests). */

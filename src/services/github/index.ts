@@ -16,3 +16,4 @@ export {
 } from './pull-requests';
 export type { GithubCompareFile, GithubPullRequest } from './pull-requests';
 export { getPullRequestBody, updatePullRequestBody } from './update-pull-request-body';
+export { commitFileToSideBranch } from './commit-file-to-side-branch';

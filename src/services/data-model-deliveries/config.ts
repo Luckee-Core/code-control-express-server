@@ -4,10 +4,10 @@ import type { CodegenRole } from '../codegen';
 /** Repo roles that receive generated files, in delivery order (storage first). */
 export const DELIVERY_ROLES: CodegenRole[] = ['storage', 'express', 'web'];
 
-export const DELIVERY_KINDS: DataModelDeliveryKind[] = ['model', 'crud', 'layout', 'list', 'detail'];
+export const DELIVERY_KINDS: DataModelDeliveryKind[] = ['model', 'crud', 'layout', 'list', 'detail', 'dashboard'];
 
-/** Web-only kinds: the app layout, list pages and detail pages. */
-const WEB_ONLY: ReadonlySet<DataModelDeliveryKind> = new Set(['layout', 'list', 'detail']);
+/** Web-only kinds: the app layout, list pages, detail pages and the dashboard. */
+const WEB_ONLY: ReadonlySet<DataModelDeliveryKind> = new Set(['layout', 'list', 'detail', 'dashboard']);
 
 /** Roles each kind delivers to: model and crud go to every repo, the page kinds to web only. */
 export const deliveryRolesForKind = (kind: DataModelDeliveryKind): CodegenRole[] => (WEB_ONLY.has(kind) ? ['web'] : DELIVERY_ROLES);
@@ -21,6 +21,7 @@ const BRANCH_SLUG: Record<DataModelDeliveryKind, string> = {
   layout: 'app-layout',
   list: 'list-pages',
   detail: 'detail-pages',
+  dashboard: 'dashboard',
 };
 
 /** Branch the PR for a data-model version is opened from. */

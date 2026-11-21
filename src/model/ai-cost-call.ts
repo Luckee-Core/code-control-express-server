@@ -15,7 +15,7 @@ export type AiCostCall = {
   source_label: string;
   /** Agent runs only: the delivery (PR) the run worked on, and its kind — model (Data model tab) or crud (API tab). */
   delivery_id: string | null;
-  delivery_kind: 'model' | 'crud' | 'layout' | 'list' | 'detail' | null;
+  delivery_kind: 'model' | 'crud' | 'layout' | 'list' | 'detail' | 'dashboard' | null;
   purpose: string;
   model: string;
   served_by_model: string;

@@ -9,7 +9,7 @@ export type MergeOutcome = { content: string } | { unchanged: true } | { skip: t
 export const addImports = (source: string, lines: string[]): string => {
   const missing = lines.filter((line) => !source.includes(line));
   if (missing.length === 0) return source;
-  const importRegex = /^import[\s\S]*?;\s*$/gm;
+  const importRegex = /^import[\s\S]*?;[ \t]*$/gm;
   let lastEnd = -1;
   for (let match = importRegex.exec(source); match; match = importRegex.exec(source)) {
     lastEnd = match.index + match[0].length;
@@ -56,6 +56,8 @@ export const applyMerge = (input: {
   } else {
     missing = indexes;
   }
+  const skipIf = merge.skip_table_if;
+  if (skipIf) missing = missing.filter((index) => index === null || render(skipIf, index).trim() !== 'true');
   if (missing.length === 0) return { unchanged: true };
 
   let content = existing;

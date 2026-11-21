@@ -4,7 +4,7 @@
  * Code Control only builds the data each template receives; the code shape is in the template repo.
  */
 
-export type CodegenKind = 'model' | 'crud';
+export type CodegenKind = 'model' | 'crud' | 'layout';
 
 /** once = one render; table = one per table; operation = one per table operation. */
 export type ManifestEach = 'once' | 'table' | 'operation';
@@ -44,6 +44,11 @@ export type ManifestMerge = {
   create_template?: string;
   scope: 'once' | 'tables';
   present?: ManifestPresence;
+  /**
+   * scope tables: an Eta string rendered per table; tables where it renders `true` are left out
+   * (e.g. `<%= !it.page.has_list_page %>` adds nav links only for pages that exist).
+   */
+  skip_table_if?: string;
   steps: ManifestMergeStep[];
 };
 

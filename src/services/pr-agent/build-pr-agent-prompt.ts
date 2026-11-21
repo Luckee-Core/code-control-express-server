@@ -77,7 +77,7 @@ export const buildPrAgentUserMessage = (input: {
   const { run, pr } = input;
   const lines: string[] = [
     `# Pull request`,
-    `${pr.delivery.repo_full_name} PR #${pr.delivery.pr_number} (branch ${pr.delivery.branch}, role ${pr.delivery.role}, ${pr.delivery.kind === 'crud' ? 'data-access layer' : 'data model'}).`,
+    `${pr.delivery.repo_full_name} PR #${pr.delivery.pr_number} (branch ${pr.delivery.branch}, role ${pr.delivery.role}, ${pr.delivery.kind === 'crud' ? 'data-access layer' : pr.delivery.kind === 'layout' ? 'app layout' : 'data model'}).`,
     '',
     '# Feedback from the reviewer',
     input.feedback.trim(),

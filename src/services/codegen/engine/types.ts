@@ -4,7 +4,7 @@
  * Code Control only builds the data each template receives; the code shape is in the template repo.
  */
 
-export type CodegenKind = 'model' | 'crud' | 'layout' | 'list' | 'detail';
+export type CodegenKind = 'model' | 'crud' | 'layout' | 'list' | 'detail' | 'dashboard';
 
 /**
  * once = one render; table = one per table; operation = one per table operation;

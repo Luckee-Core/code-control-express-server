@@ -4,13 +4,13 @@ import { getSoftwareSystemReposBySoftwareSystemId } from '../../data/software-sy
 import type { DataModelDeliveryKind } from '../../model/data-model-delivery';
 import type { CanonicalDataClient } from '../canonical-data-client';
 import { ProposalRequestError } from '../data-model-proposals/proposal-request-error';
-import { DELIVERY_ROLES } from './config';
+import { deliveryRolesForKind } from './config';
 import { resolveRoleRepo } from './resolve-role-repos';
 import { syncDeliveryPullRequest } from './sync-delivery-pull-request';
 import type { DeliveryTarget } from './types';
 
 /**
- * For each delivery role (storage, express, web): the project's repo for it and the delivery of
+ * For each role the kind delivers to (storage, express, web; layout: web): the project's repo for it and the delivery of
  * `kind` already made for this proposal, if any (PR state refreshed from GitHub).
  */
 export const processListDataModelDeliveries = async (
@@ -30,7 +30,7 @@ export const processListDataModelDeliveries = async (
   const deliveries = await Promise.all(
     stored.filter((delivery) => (delivery.kind ?? 'model') === kind).map((delivery) => syncDeliveryPullRequest(client, delivery)),
   );
-  return DELIVERY_ROLES.map((role) => {
+  return deliveryRolesForKind(kind).map((role) => {
     const repo = resolveRoleRepo(repos, role);
     const delivery = deliveries.find((item) => item.role === role && (!repo || item.software_system_repo_id === repo.id)) ?? null;
     return { role, repo, delivery };

@@ -20,7 +20,7 @@ import {
 } from '../github';
 import { ProposalRequestError } from '../data-model-proposals/proposal-request-error';
 import { buildPullRequestBody } from './build-pull-request-body';
-import { DELIVERY_ROLES, deliveryBranchName } from './config';
+import { deliveryBranchName, deliveryRolesForKind } from './config';
 import { loadDeliveryInputs, type DeliveryInputs } from './load-delivery-inputs';
 import { readRepoHead } from './read-repo-render-state';
 import { renderDeliveryFiles } from './render-delivery-files';
@@ -111,7 +111,9 @@ const deliverToRepo = async (
     const title =
       kind === 'model'
         ? `Data model v${proposal.version}: ${content.tables.length} tables`
-        : `Data access v${proposal.version}: CRUD for ${content.tables.length} tables`;
+        : kind === 'crud'
+          ? `Data access v${proposal.version}: CRUD for ${content.tables.length} tables`
+          : `App layout v${proposal.version}: sidebar, breadcrumbs and routes`;
     console.log('🚀 [data-model-deliveries] Committing', { repo: snapshot.full_name, branch, files: files.length });
     const commitSha = await commitFilesToBranch({
       ref: snapshot.ref,
@@ -169,9 +171,26 @@ const deliverToRepo = async (
   }
 };
 
+/** A merged layout delivery is stale when rendering against the repo today would change files. */
+const layoutHasChanges = async (
+  client: CanonicalDataClient,
+  inputs: DeliveryInputs,
+  role: CodegenRole,
+  repo: SoftwareSystemRepo,
+): Promise<boolean> => {
+  try {
+    const head = await readRepoHead(repo);
+    const { files } = await renderDeliveryFiles({ client, kind: 'layout', role, inputs, head });
+    return files.length > 0;
+  } catch (error) {
+    console.warn('⚠️ [data-model-deliveries] Layout re-render check failed', { repo: repo.name, error: errorMessage(error) });
+    return false;
+  }
+};
+
 /**
- * Delivers one kind (model files or the CRUD layer) of the approved data model to each requested role's repo (default: storage, express,
- * web) as one PR per repo, optionally squash-merging each one. Roles without a repo come back
+ * Delivers one kind (model files, the CRUD layer or the web app layout) of the approved data model to each requested role's repo
+ * (default: storage, express, web; layout: web only) as one PR per repo, optionally squash-merging each one. Roles without a repo come back
  * with a null delivery; repos whose PR for this version is already merged are skipped unchanged.
  */
 export const processDeliverDataModel = async (
@@ -183,7 +202,7 @@ export const processDeliverDataModel = async (
     getSoftwareSystemReposBySoftwareSystemId(client, inputs.proposal.software_system_id),
     listDataModelDeliveriesByProposalId(client, input.proposalId),
   ]);
-  const roles = DELIVERY_ROLES.filter((role) => !input.roles || input.roles.includes(role));
+  const roles = deliveryRolesForKind(input.kind).filter((role) => !input.roles || input.roles.includes(role));
 
   const targets: DeliveryTarget[] = [];
   for (const role of roles) {
@@ -196,6 +215,11 @@ export const processDeliverDataModel = async (
     const current = existing.find((item) => item.software_system_repo_id === repo.id && (item.kind ?? 'model') === input.kind);
     const synced = current ? await syncDeliveryPullRequest(client, current) : null;
     const merged = synced?.status === 'merged' ? synced : null;
+    if (merged && input.kind === 'layout' && (await layoutHasChanges(client, inputs, role, repo))) {
+      // The layout grows with the repo (routes for new tables, sidebar links for new pages): deliver again.
+      targets.push({ role, repo, delivery: await deliverToRepo(client, inputs, role, repo, input.autoMerge === true, input.kind) });
+      continue;
+    }
     if (merged) {
       console.log('⏭️ [data-model-deliveries] Already merged, skipping', { repo: repo.name, pr: merged.pr_number });
       targets.push({ role, repo, delivery: merged });

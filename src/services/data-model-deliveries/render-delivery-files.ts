@@ -7,7 +7,8 @@ import type { RepoHead } from './read-repo-render-state';
 /**
  * Renders one delivery kind for one role against the repo's default branch with the role's
  * template repo (codegen/ at its default branch head, or a pinned commit) and runs the
- * convention checks: model = migrations + src/model; crud = data-access layer.
+ * convention checks: model = migrations + src/model; crud = data-access layer; layout = web app
+ * shell (sidebar, breadcrumbs, routes).
  */
 export const renderDeliveryFiles = async (input: {
   client: CanonicalDataClient;
@@ -27,4 +28,5 @@ export const renderDeliveryFiles = async (input: {
     checks: input.inputs.checks,
     head: { ref: input.head.ref, base_sha: input.head.base_sha },
     template: input.template,
+    app: input.inputs.app,
   });

@@ -3,10 +3,11 @@ import { listConventionRoles } from '../../data/convention-roles';
 import { listConventions } from '../../data/conventions';
 import { getDataModelProposalById } from '../../data/data-model-proposals';
 import { listLifecycleOptions } from '../../data/lifecycle-options';
+import { getSoftwareSystemById } from '../../data/software-systems';
 import { listStandardColumns } from '../../data/standard-columns';
 import type { DataModelProposal, DataModelProposalContent } from '../../model/data-model-proposal';
 import type { CanonicalDataClient } from '../canonical-data-client';
-import type { CodegenVocabulary, FileCheckConvention } from '../codegen';
+import { toKebabCase, type CodegenApp, type CodegenVocabulary, type FileCheckConvention } from '../codegen';
 import { ProposalRequestError } from '../data-model-proposals/proposal-request-error';
 
 export type DeliveryInputs = {
@@ -14,6 +15,8 @@ export type DeliveryInputs = {
   content: DataModelProposalContent;
   vocabulary: CodegenVocabulary;
   checks: FileCheckConvention[];
+  /** The software system's name and slug, for app chrome (sidebar brand, storage keys). */
+  app: CodegenApp;
 };
 
 const snapshotVocabulary = (snapshot: Record<string, unknown> | null | undefined): CodegenVocabulary | null => {
@@ -42,13 +45,15 @@ export const loadDeliveryInputs = async (client: CanonicalDataClient, proposalId
     throw new ProposalRequestError(409, 'Only the approved data-model version can be delivered');
   }
 
-  const [conventions, conventionRoles, liveVocabulary] = await Promise.all([
+  const [conventions, conventionRoles, liveVocabulary, system] = await Promise.all([
     listConventions(client, { status: 'active' }),
     listConventionRoles(client, null),
     snapshotVocabulary(proposal.conventions_snapshot)
       ? Promise.resolve(null)
       : Promise.all([listColumnTypes(client), listStandardColumns(client), listLifecycleOptions(client)]),
+    getSoftwareSystemById(client, proposal.software_system_id),
   ]);
+  const appName = system?.name?.trim() || 'App';
 
   const vocabulary =
     snapshotVocabulary(proposal.conventions_snapshot) ??
@@ -68,5 +73,11 @@ export const loadDeliveryInputs = async (client: CanonicalDataClient, proposalId
       role_keys: conventionRoles.filter((link) => link.convention_id === convention.id).map((link) => link.role_key),
     }));
 
-  return { proposal, content: proposal.proposal, vocabulary, checks };
+  return {
+    proposal,
+    content: proposal.proposal,
+    vocabulary,
+    checks,
+    app: { name: appName, slug: toKebabCase(appName.replace(/[^A-Za-z0-9\s_-]/g, ' ')) || 'app' },
+  };
 };

@@ -4,10 +4,14 @@
  * Code Control only builds the data each template receives; the code shape is in the template repo.
  */
 
-export type CodegenKind = 'model' | 'crud' | 'layout';
+export type CodegenKind = 'model' | 'crud' | 'layout' | 'list';
 
-/** once = one render; table = one per table; operation = one per table operation. */
-export type ManifestEach = 'once' | 'table' | 'operation';
+/**
+ * once = one render; table = one per table; operation = one per table operation;
+ * column = one per column of the table's list view (`it.column`, from it.page.list.columns
+ * plus every enum/boolean filter column; narrow with skip_if).
+ */
+export type ManifestEach = 'once' | 'table' | 'operation' | 'column';
 
 /**
  * How a merge decides that a table (scope tables) or the whole block (scope once) is already in
@@ -68,6 +72,11 @@ export type ManifestFile = {
   raw?: boolean;
   /** Skip the file when the rendered content is empty or whitespace. */
   skip_if_empty?: boolean;
+  /**
+   * Eta string rendered with the item's context (table / operation / column); the file is skipped
+   * when it renders `true` (e.g. `<%= it.page.list.is_join %>`).
+   */
+  skip_if?: string;
   merge?: ManifestMerge;
   /** Conventions this template implements (shown on template PRs and in convergence checks). */
   convention_keys?: string[];

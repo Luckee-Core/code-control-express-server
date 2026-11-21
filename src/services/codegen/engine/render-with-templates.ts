@@ -166,6 +166,7 @@ export const renderWithTemplates = (input: {
 
     const template = templateText(entry, entry.template);
     const render = (data: object, where: string): void => {
+      if (entry.skip_if && renderString(entry.skip_if, data, `${entry.id} skip_if`).trim() === 'true') return;
       const path = renderString(entry.path, data, `${entry.id} path`);
       if (entry.mode === 'if_missing' && exists(path)) return;
       const content = entry.raw ? template : renderString(template, data, where);
@@ -179,6 +180,15 @@ export const renderWithTemplates = (input: {
       context.tables.forEach((crud, index) => {
         if (entry.each === 'table') {
           render(itemContext(context, crud, index), `${entry.id} (${crud.names.table})`);
+          return;
+        }
+        if (entry.each === 'column') {
+          const list = context.pages[index].list;
+          const columns = [...list.columns, ...list.enum_filters, ...list.boolean_filters];
+          const unique = columns.filter((column, at) => columns.findIndex((other) => other.name === column.name) === at);
+          for (const column of unique) {
+            render(itemContext(context, crud, index, undefined, column), `${entry.id} (${crud.names.table}.${column.name})`);
+          }
           return;
         }
         for (const op of crud.operations) {

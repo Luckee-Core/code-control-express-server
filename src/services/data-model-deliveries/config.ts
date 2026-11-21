@@ -4,13 +4,21 @@ import type { CodegenRole } from '../codegen';
 /** Repo roles that receive generated files, in delivery order (storage first). */
 export const DELIVERY_ROLES: CodegenRole[] = ['storage', 'express', 'web'];
 
-export const DELIVERY_KINDS: DataModelDeliveryKind[] = ['model', 'crud', 'layout'];
+export const DELIVERY_KINDS: DataModelDeliveryKind[] = ['model', 'crud', 'layout', 'list'];
 
-/** Roles each kind delivers to: the app layout (sidebar, breadcrumbs, routes) is web only. */
+/** Roles each kind delivers to: the app layout and the list pages are web only. */
 export const deliveryRolesForKind = (kind: DataModelDeliveryKind): CodegenRole[] =>
-  kind === 'layout' ? ['web'] : DELIVERY_ROLES;
+  kind === 'layout' || kind === 'list' ? ['web'] : DELIVERY_ROLES;
 
-const BRANCH_SLUG: Record<DataModelDeliveryKind, string> = { model: 'data-model', crud: 'data-access', layout: 'app-layout' };
+/** Kinds that grow with the repo after merging (new tables, pages added since): a merged PR can be delivered again. */
+export const isRedeliverableKind = (kind: DataModelDeliveryKind): boolean => kind === 'layout' || kind === 'list';
+
+const BRANCH_SLUG: Record<DataModelDeliveryKind, string> = {
+  model: 'data-model',
+  crud: 'data-access',
+  layout: 'app-layout',
+  list: 'list-pages',
+};
 
 /** Branch the PR for a data-model version is opened from. */
 export const deliveryBranchName = (kind: DataModelDeliveryKind, version: number): string =>

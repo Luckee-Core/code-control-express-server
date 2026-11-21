@@ -22,7 +22,7 @@ import {
 import { ProposalRequestError } from '../data-model-proposals/proposal-request-error';
 import { buildPullRequestBody } from './build-pull-request-body';
 import { publishPreviewImage } from './publish-preview-image';
-import { deliveryBranchName, deliveryRolesForKind } from './config';
+import { deliveryBranchName, deliveryRolesForKind, isRedeliverableKind } from './config';
 import { loadDeliveryInputs, type DeliveryInputs } from './load-delivery-inputs';
 import { readRepoHead } from './read-repo-render-state';
 import { renderDeliveryFiles } from './render-delivery-files';
@@ -83,6 +83,20 @@ const deliverToRepo = async (
         return fail(`Merge the data model PR for ${repo.name} first (Data model tab). The API files import those models.`);
       }
     }
+    if (kind === 'list') {
+      // List pages call the API thunks and dumps, and add sidebar links: the API and layout PRs come first.
+      const required: Array<{ kind: DataModelDeliveryKind; tab: string; why: string }> = [
+        { kind: 'crud', tab: 'API', why: 'The pages load rows with its fetch thunks and dumps.' },
+        { kind: 'layout', tab: 'Layout', why: 'The pages live in its (app) route group and add links to its sidebar.' },
+      ];
+      for (const need of required) {
+        const prior = history.find((item) => item.proposal_id === proposal.id && (item.kind ?? 'model') === need.kind);
+        const synced = prior ? await syncDeliveryPullRequest(client, prior) : null;
+        if (synced?.status !== 'merged') {
+          return fail(`Merge the ${need.tab} PR for ${repo.name} first (${need.tab} tab). ${need.why}`);
+        }
+      }
+    }
     const merged =
       kind === 'model'
         ? history.find((item) => item.status === 'merged' && item.proposal_id !== proposal.id && (item.kind ?? 'model') === 'model')
@@ -115,7 +129,9 @@ const deliverToRepo = async (
         ? `Data model v${proposal.version}: ${content.tables.length} tables`
         : kind === 'crud'
           ? `Data access v${proposal.version}: CRUD for ${content.tables.length} tables`
-          : `App layout v${proposal.version}: sidebar, breadcrumbs and routes`;
+          : kind === 'list'
+            ? `List pages v${proposal.version}: tables, search and filters`
+            : `App layout v${proposal.version}: sidebar, breadcrumbs and routes`;
     console.log('🚀 [data-model-deliveries] Committing', { repo: snapshot.full_name, branch, files: files.length });
     const commitSha = await commitFilesToBranch({
       ref: snapshot.ref,
@@ -189,19 +205,20 @@ const deliverToRepo = async (
   }
 };
 
-/** A merged layout delivery is stale when rendering against the repo today would change files. */
-const layoutHasChanges = async (
+/** A merged layout / list-pages delivery is stale when rendering against the repo today would change files. */
+const hasNewFiles = async (
   client: CanonicalDataClient,
   inputs: DeliveryInputs,
+  kind: DataModelDeliveryKind,
   role: CodegenRole,
   repo: SoftwareSystemRepo,
 ): Promise<boolean> => {
   try {
     const head = await readRepoHead(repo);
-    const { files } = await renderDeliveryFiles({ client, kind: 'layout', role, inputs, head });
+    const { files } = await renderDeliveryFiles({ client, kind, role, inputs, head });
     return files.length > 0;
   } catch (error) {
-    console.warn('⚠️ [data-model-deliveries] Layout re-render check failed', { repo: repo.name, error: errorMessage(error) });
+    console.warn('⚠️ [data-model-deliveries] Re-render check failed', { repo: repo.name, kind, error: errorMessage(error) });
     return false;
   }
 };
@@ -233,8 +250,8 @@ export const processDeliverDataModel = async (
     const current = existing.find((item) => item.software_system_repo_id === repo.id && (item.kind ?? 'model') === input.kind);
     const synced = current ? await syncDeliveryPullRequest(client, current) : null;
     const merged = synced?.status === 'merged' ? synced : null;
-    if (merged && input.kind === 'layout' && (await layoutHasChanges(client, inputs, role, repo))) {
-      // The layout grows with the repo (routes for new tables, sidebar links for new pages): deliver again.
+    if (merged && isRedeliverableKind(input.kind) && (await hasNewFiles(client, inputs, input.kind, role, repo))) {
+      // Layout and list pages grow with the repo (routes, links and pages for new tables): deliver again.
       targets.push({ role, repo, delivery: await deliverToRepo(client, inputs, role, repo, input.autoMerge === true, input.kind) });
       continue;
     }

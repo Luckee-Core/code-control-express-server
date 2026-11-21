@@ -1,6 +1,7 @@
 import type { DataModelProposalContent } from '../../../model/data-model-proposal';
 import { buildRenderColumns } from '../build-render-columns';
 import { buildTablePages, type TablePage } from '../table-pages';
+import type { ListColumn } from '../table-list-view';
 import { buildCrudTables, type CrudOperation, type CrudTable } from '../crud-operations';
 import type { CodegenRole, CodegenVocabulary } from '../types';
 import { templateHelpers, type TemplateHelpers } from './helpers';
@@ -37,6 +38,8 @@ export type CodegenItemContext = CodegenContext & {
   index: number;
   op?: CrudOperation;
   page: TablePage;
+  /** each = column: the column being rendered (list-page view of it). */
+  column?: ListColumn;
 };
 
 /** Highest NNN prefix among files directly in migrations/ (0 when none). */
@@ -79,12 +82,18 @@ export const buildCodegenContext = (input: {
     tables,
     migrations: { next: highest + 1 },
     app: input.app ?? { name: 'App', slug: 'app' },
-    pages: buildTablePages(tables.map((crud) => crud.names), input.state.paths),
+    pages: buildTablePages(tables, input.state.paths),
     h: templateHelpers,
   };
 };
 
-export const itemContext = (base: CodegenContext, crud: CrudTable, index: number, op?: CrudOperation): CodegenItemContext => ({
+export const itemContext = (
+  base: CodegenContext,
+  crud: CrudTable,
+  index: number,
+  op?: CrudOperation,
+  column?: ListColumn,
+): CodegenItemContext => ({
   ...base,
   crud,
   table: crud.table,
@@ -93,4 +102,5 @@ export const itemContext = (base: CodegenContext, crud: CrudTable, index: number
   index,
   page: base.pages[index],
   ...(op ? { op } : {}),
+  ...(column ? { column } : {}),
 });

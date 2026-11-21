@@ -7,7 +7,8 @@ export type MergeOutcome = { content: string } | { unchanged: true } | { skip: t
 
 /** Inserts lines after the last top-level `import …;` statement (or at the top), skipping ones already there. */
 export const addImports = (source: string, lines: string[]): string => {
-  const missing = lines.filter((line) => !source.includes(line));
+  // One line per table: identical lines (e.g. a shared routes import) are added once.
+  const missing = [...new Set(lines)].filter((line) => !source.includes(line));
   if (missing.length === 0) return source;
   const importRegex = /^import[\s\S]*?;[ \t]*$/gm;
   let lastEnd = -1;

@@ -5,7 +5,7 @@ import type { CodegenRole, RenderedFile } from '../codegen';
 const ROLE_NOTE: Record<DataModelDeliveryKind, Record<CodegenRole, string>> = {
   model: {
     storage:
-      'After merging, apply the new migrations with `npm run db:apply-migrations -- <NNN> …` (the numbers below) and restart storage.',
+      'After merging, set `DATABASE_URL` in this repo\'s `.env` and run `npm run db:apply-migrations`: on a fresh database it creates the database if needed and applies every file in `migrations/` in order. Then restart storage. (Database that already has tables: pass only the new numbers below, e.g. `npm run db:apply-migrations -- 003 004`.)',
     express: 'Model types only; invoke wrappers and services come with the API PR.',
     web: 'Model types only; src/api, dumps and thunks come with the API PR.',
   },

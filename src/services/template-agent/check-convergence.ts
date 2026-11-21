@@ -9,13 +9,15 @@ import { loadDeliveryInputs } from '../data-model-deliveries/load-delivery-input
 import { readRepoHeadByFullName } from '../data-model-deliveries/read-repo-render-state';
 import { renderDeliveryFiles } from '../data-model-deliveries/render-delivery-files';
 import { getBranchHeadSha, getFileText } from '../github';
+import { normalizeCodeLayout } from './normalize-code-layout';
 import { parseRepoFullName } from './run-template-agent';
 
 /**
  * After a template change merges: re-renders the delivery the feedback came from with the merged
  * templates and compares the files the PR agent edited with what is on the PR. converged = the
  * templates now produce the reviewer's fix; diverged = they don't (the fix was project-specific,
- * or the template change missed something). Stored on the delivery; null when not applicable.
+ * or the template change missed something). Layout (whitespace, wrapping, trailing commas) is
+ * ignored. Stored on the delivery; null when not applicable.
  */
 export const checkConvergence = async (
   client: CanonicalDataClient,
@@ -53,7 +55,8 @@ export const checkConvergence = async (
     const differing: string[] = [];
     for (const path of edited) {
       const onPr = await getFileText(target, path, prSha);
-      if ((renderedByPath.get(path) ?? null) !== onPr) differing.push(path);
+      const rendered = renderedByPath.get(path) ?? null;
+      if (rendered === null || onPr === null || normalizeCodeLayout(rendered) !== normalizeCodeLayout(onPr)) differing.push(path);
     }
     return updateDataModelDelivery(client, delivery.id, {
       convergence: differing.length === 0 ? 'converged' : 'diverged',

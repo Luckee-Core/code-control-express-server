@@ -21,6 +21,10 @@ export type ListColumn = {
   /** camelCase field: due_date → dueDate (filter slice keys). */
   field_camel: string;
   nullable: boolean;
+  /** Parent table for a foreign key ('' otherwise). */
+  references_table: string;
+  /** Long text (description, notes, body…): a textarea in forms. */
+  multiline: boolean;
 };
 
 /** What a generated list page shows and filters on, derived from the table's columns. */
@@ -69,12 +73,15 @@ const kindOf = (column: RenderColumn): ListColumnKind => {
   return 'text';
 };
 
-const toListColumn = (column: RenderColumn, entity: string): ListColumn => {
+const MULTILINE = /(^|_)(description|notes?|body|content|summary|details|text|message|bio|instructions)$/;
+
+export const toListColumn = (column: RenderColumn, entity: string): ListColumn => {
   const field = pascal(column.name);
   const kind = kindOf(column);
   return {
     name: column.name,
-    label: humanize(column.name),
+    // A foreign key reads as the thing it points at: business_fact_id → Business fact.
+    label: kind === 'reference' && /_id$/.test(column.name) ? humanize(column.name.replace(/_id$/, '')) : humanize(column.name),
     kind,
     enum_values: kind === 'enum' ? column.enum_values : [],
     enum_type: kind === 'enum' ? `${entity}${field}` : '',
@@ -82,6 +89,8 @@ const toListColumn = (column: RenderColumn, entity: string): ListColumn => {
     field_pascal: field,
     field_camel: field.charAt(0).toLowerCase() + field.slice(1),
     nullable: !column.not_null,
+    references_table: column.references_table,
+    multiline: kind === 'text' && MULTILINE.test(column.name),
   };
 };
 
@@ -95,6 +104,8 @@ const UPDATED_AT: ListColumn = {
   field_pascal: 'UpdatedAt',
   field_camel: 'updatedAt',
   nullable: false,
+  references_table: '',
+  multiline: false,
 };
 
 /** List page view for one table: displayed columns, search fields and filter controls. */

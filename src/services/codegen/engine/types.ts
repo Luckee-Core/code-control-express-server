@@ -4,14 +4,17 @@
  * Code Control only builds the data each template receives; the code shape is in the template repo.
  */
 
-export type CodegenKind = 'model' | 'crud' | 'layout' | 'list';
+export type CodegenKind = 'model' | 'crud' | 'layout' | 'list' | 'detail';
 
 /**
  * once = one render; table = one per table; operation = one per table operation;
  * column = one per column of the table's list view (`it.column`, from it.page.list.columns
- * plus every enum/boolean filter column; narrow with skip_if).
+ * plus every enum/boolean filter column; narrow with skip_if);
+ * field = one per editable field of the table's detail form (`it.column`, it.page.detail.form_fields);
+ * tab = one per related-data tab of the table's detail page (`it.tab`, it.page.detail.tabs).
+ * Merge entries take once (one file) or table (one file per table, `path` rendered per table).
  */
-export type ManifestEach = 'once' | 'table' | 'operation' | 'column';
+export type ManifestEach = 'once' | 'table' | 'operation' | 'column' | 'field' | 'tab';
 
 /**
  * How a merge decides that a table (scope tables) or the whole block (scope once) is already in
@@ -39,7 +42,12 @@ export type ManifestMergeStep =
    */
   | { op: 'rewrite_list'; pattern: string; item: string; format: 'inline' | 'lines'; line?: string; error?: string }
   /** Appends one rendered line per missing table to the end of the file (trailing whitespace normalized). */
-  | { op: 'append_lines'; line: string };
+  | { op: 'append_lines'; line: string }
+  /**
+   * Replaces the first occurrence of the rendered `find` with the rendered `replace` (both rendered once
+   * with the merge context). Without `error`, a missing `find` skips this step silently (hand-edited file).
+   */
+  | { op: 'replace'; find: string; replace: string; error?: string };
 
 export type ManifestMerge = {
   /** error = finding; skip = no file; create = render `create_template` with every table; empty = merge into ''. */

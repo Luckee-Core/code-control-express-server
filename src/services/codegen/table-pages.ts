@@ -1,4 +1,5 @@
 import type { CrudTable } from './crud-operations';
+import { buildTableDetailViews, type TableDetailView } from './table-detail-view';
 import { buildTableListView, type TableListView } from './table-list-view';
 
 /** Web routes for one table: list and static detail paths (web ADR 008) and their constants. */
@@ -23,6 +24,8 @@ export type TablePage = {
   has_detail_page: boolean;
   /** Columns, search fields and filters for the generated list page. */
   list: TableListView;
+  /** Summary fields, edit form fields, parent links and related tabs for the detail page. */
+  detail: TableDetailView;
 };
 
 const constName = (kebab: string): string => kebab.replace(/-/g, '_').toUpperCase();
@@ -36,8 +39,10 @@ const inRepo = (paths: Set<string> | null, appFile: string): boolean =>
   Boolean(paths && (paths.has(appFile) || paths.has(appFile.replace('src/app/(app)/', 'src/app/'))));
 
 /** Routes per table; has_list_page / has_detail_page are false when the repo paths are unknown. */
-export const buildTablePages = (tables: CrudTable[], paths: Set<string> | null): TablePage[] =>
-  tables.map((crud) => {
+export const buildTablePages = (tables: CrudTable[], paths: Set<string> | null): TablePage[] => {
+  const lists = tables.map((crud) => buildTableListView(crud));
+  const details = buildTableDetailViews(tables, lists);
+  return tables.map((crud, index) => {
     const name = crud.names;
     const listPageFile = `src/app/(app)/${name.folder}/page.tsx`;
     const detailPageFile = `src/app/(app)/${name.entity}-detail-page/page.tsx`;
@@ -51,6 +56,8 @@ export const buildTablePages = (tables: CrudTable[], paths: Set<string> | null):
       has_list_page: inRepo(paths, listPageFile),
       detail_page_file: detailPageFile,
       has_detail_page: inRepo(paths, detailPageFile),
-      list: buildTableListView(crud),
+      list: lists[index],
+      detail: details[index],
     };
   });
+};

@@ -6,6 +6,7 @@ export { buildCodegenContext } from './engine/build-codegen-context';
 export type { CodegenApp, CodegenContext } from './engine/build-codegen-context';
 export type { TablePage } from './table-pages';
 export type { ListColumn, ListColumnKind, TableListView } from './table-list-view';
+export type { DetailReference, DetailTab, TableDetailView } from './table-detail-view';
 export { renderWithTemplates, renderMergePaths, renderPreviewHtml, CodegenTemplateError } from './engine/render-with-templates';
 export type { EngineRenderedFile, EngineRenderResult } from './engine/render-with-templates';
 export { loadTemplateSource, loadTemplateSourceFromDirectory } from './engine/load-template-source';

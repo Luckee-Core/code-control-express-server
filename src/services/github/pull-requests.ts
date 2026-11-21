@@ -120,7 +120,8 @@ const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(
 export const mergePullRequest = async (input: {
   ref: GithubRepoRef;
   number: number;
-  title: string;
+  /** Squash commit title; GitHub's default (the PR title) when omitted. */
+  title?: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> => {
   let lastError = '';
   for (let attempt = 0; attempt < 4; attempt += 1) {
@@ -128,7 +129,7 @@ export const mergePullRequest = async (input: {
     const result = await requestGithub<{ merged: boolean }>(
       'PUT',
       `${repoPath(input.ref.owner, input.ref.repo)}/pulls/${input.number}/merge`,
-      { merge_method: 'squash', commit_title: `${input.title} (#${input.number})` },
+      input.title ? { merge_method: 'squash', commit_title: `${input.title} (#${input.number})` } : { merge_method: 'squash' },
     );
     if (result.ok && result.data.merged) return { ok: true };
     lastError = result.ok ? 'GitHub did not merge the pull request' : result.error;

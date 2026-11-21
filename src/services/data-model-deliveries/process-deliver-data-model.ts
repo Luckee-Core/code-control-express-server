@@ -17,9 +17,11 @@ import {
   findOpenPullRequest,
   listTreePaths,
   mergePullRequest,
+  updatePullRequestBody,
 } from '../github';
 import { ProposalRequestError } from '../data-model-proposals/proposal-request-error';
 import { buildPullRequestBody } from './build-pull-request-body';
+import { publishPreviewImage } from './publish-preview-image';
 import { deliveryBranchName, deliveryRolesForKind } from './config';
 import { loadDeliveryInputs, type DeliveryInputs } from './load-delivery-inputs';
 import { readRepoHead } from './read-repo-render-state';
@@ -102,7 +104,7 @@ const deliverToRepo = async (
         );
       }
     }
-    const { files, findings, template } = await renderDeliveryFiles({ client, kind, role, inputs, head: snapshot });
+    const { files, findings, template, preview } = await renderDeliveryFiles({ client, kind, role, inputs, head: snapshot });
     const errors = findings.filter((finding) => finding.severity === 'error');
     if (errors.length > 0) {
       return fail(`Rendered files break ${errors.length} MUST/NEVER rules: ${errors.map((finding) => `${finding.path} (${finding.convention_key})`).join('; ')}`);
@@ -123,14 +125,30 @@ const deliverToRepo = async (
       files: files.map((file) => ({ path: file.path, content: file.content })),
     });
 
+    // Screenshot of the template's preview page (layout), linked from the PR body.
+    const previewImageUrl = await publishPreviewImage({
+      ref: snapshot.ref,
+      preview,
+      role,
+      name: `${kind}-v${proposal.version}`,
+      commitSha,
+    });
+    const body = buildPullRequestBody({ kind, proposal, content, role, files, previewImageUrl });
+    const existing = await findOpenPullRequest(snapshot.ref, branch);
+    if (existing && previewImageUrl) {
+      // Re-render: refresh the body so the screenshot matches the new commit.
+      await updatePullRequestBody(snapshot.ref, existing.number, body).catch((error: unknown) =>
+        console.warn('⚠️ [data-model-deliveries] Could not update PR body', { pr: existing.number, error: errorMessage(error) }),
+      );
+    }
     const pullRequest =
-      (await findOpenPullRequest(snapshot.ref, branch)) ??
+      existing ??
       (await createPullRequest({
         ref: snapshot.ref,
         head: branch,
         base: snapshot.base_branch,
         title,
-        body: buildPullRequestBody({ kind, proposal, content, role, files }),
+        body,
       }));
     console.log('✅ [data-model-deliveries] PR ready', { repo: snapshot.full_name, pr: pullRequest.html_url });
 

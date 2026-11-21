@@ -5,7 +5,7 @@ import { checkRenderedFiles, type FileCheckConvention } from '../check-rendered-
 import type { CodegenRole, CodegenVocabulary, RenderFinding } from '../types';
 import { buildCodegenContext, type CodegenApp } from './build-codegen-context';
 import { loadTemplateSource } from './load-template-source';
-import { CodegenTemplateError, renderMergePaths, renderWithTemplates, type EngineRenderedFile } from './render-with-templates';
+import { CodegenTemplateError, renderMergePaths, renderPreviewHtml, renderWithTemplates, type EngineRenderedFile } from './render-with-templates';
 import { resolveTemplateRepo } from './resolve-template-repo';
 import type { CodegenKind, CodegenRepoState, TemplateSource } from './types';
 
@@ -19,6 +19,8 @@ export type RenderForRepoResult = {
   files: EngineRenderedFile[];
   findings: RenderFinding[];
   template: { repo: string; sha: string };
+  /** The kind's preview page (manifest `preview`), or null when the template declares none. */
+  preview: { html: string; width: number; height: number } | null;
 };
 
 /** Resolves the template repo for a role and the commit to use. */
@@ -79,7 +81,10 @@ export const renderForRepo = async (input: {
   const state = await readCodegenRepoState({ ...input, source });
   const context = buildCodegenContext({ ...input, state });
   const rendered = renderWithTemplates({ source, kind: input.kind, role: input.role, context, state });
+  const previewHtml = renderPreviewHtml(source, input.kind, context);
+  const previewSpec = source.manifest.kinds[input.kind]?.preview;
   return {
+    preview: previewHtml === null ? null : { html: previewHtml, width: previewSpec?.width ?? 1280, height: previewSpec?.height ?? 760 },
     files: rendered.files,
     findings: [...rendered.findings, ...checkRenderedFiles(rendered.files, input.checks)],
     template: { repo: `${pin.ref.owner}/${pin.ref.repo}`, sha: pin.sha },

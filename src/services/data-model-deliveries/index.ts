@@ -1,2 +1,2 @@
 export { createDataModelDeliveriesRouter } from './router';
-export type { DeliveryPreview, DeliveryTarget } from './types';
+export type { DeliveryPreview, DeliveryScreenshot, DeliveryTarget } from './types';

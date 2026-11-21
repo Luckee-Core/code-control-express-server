@@ -31,8 +31,10 @@ export const buildPullRequestBody = (input: {
   content: DataModelProposalContent;
   role: CodegenRole;
   files: RenderedFile[];
+  /** Screenshot of the template's preview page (layout), shown under the summary. */
+  previewImageUrl?: string | null;
 }): string => {
-  const { kind, proposal, content, role, files } = input;
+  const { kind, proposal, content, role, files, previewImageUrl } = input;
   const what =
     kind === 'model'
       ? 'data model'
@@ -44,6 +46,8 @@ export const buildPullRequestBody = (input: {
     '',
     content.summary ? `> ${content.summary.replace(/\n+/g, ' ')}` : '',
     '',
+    previewImageUrl ? '### Preview' : '',
+    previewImageUrl ? `![${kind === 'layout' ? 'App layout' : 'Preview'}](${previewImageUrl})` : '',
     '### Tables',
     ...content.tables.map((table) => `- \`${table.name}\` (${table.archetype}, ${table.lifecycle}) — ${table.purpose}`),
     '',

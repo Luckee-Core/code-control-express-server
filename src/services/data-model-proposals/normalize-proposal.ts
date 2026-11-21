@@ -1,6 +1,7 @@
 import type {
   DataModelProposalContent,
   ExcludedTable,
+  ProposalQuestion,
   ProposedColumn,
   ProposedOnDelete,
   ProposedTable,
@@ -8,6 +9,9 @@ import type {
 import type { DataModelVocabulary } from './types';
 
 const ON_DELETE: ProposedOnDelete[] = ['none', 'cascade', 'set_null', 'restrict'];
+
+/** The prompt allows at most this many open questions. */
+const MAX_OPEN_QUESTIONS = 4;
 
 const toSnake = (value: unknown): string =>
   String(value ?? '')
@@ -28,6 +32,29 @@ const singularize = (tableName: string): string => {
 };
 
 const text = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+
+/**
+ * One open question: options need a label; the recommended option must be one of them (falls back
+ * to the first). A question with fewer than two options is kept as a plain note (no options).
+ */
+const normalizeQuestion = (raw: unknown): ProposalQuestion | null => {
+  if (typeof raw === 'string') return raw.trim() ? { question: raw.trim(), why_it_matters: '', options: [], recommended_option: '' } : null;
+  const value = (raw ?? {}) as Partial<ProposalQuestion>;
+  const question = text(value.question);
+  if (!question) return null;
+  const options = (Array.isArray(value.options) ? value.options : [])
+    .map((option) => ({ label: text(option?.label), schema_effect: text(option?.schema_effect) }))
+    .filter((option) => option.label)
+    .slice(0, 4);
+  if (options.length < 2) return { question, why_it_matters: text(value.why_it_matters), options: [], recommended_option: '' };
+  const recommended = text(value.recommended_option);
+  return {
+    question,
+    why_it_matters: text(value.why_it_matters),
+    options,
+    recommended_option: options.some((option) => option.label === recommended) ? recommended : options[0].label,
+  };
+};
 
 const normalizeColumn = (raw: Partial<ProposedColumn>): ProposedColumn => {
   const type = toSnake(raw.type);
@@ -120,7 +147,11 @@ export const normalizeProposal = (
     tables: sortByDependencies(tables),
     excluded,
     open_questions: (Array.isArray(raw.open_questions) ? raw.open_questions : [])
-      .map((question) => text(question))
-      .filter(Boolean),
+      .map(normalizeQuestion)
+      .filter((question): question is ProposalQuestion => question !== null)
+      .slice(0, MAX_OPEN_QUESTIONS),
+    convention_gaps: (Array.isArray(raw.convention_gaps) ? raw.convention_gaps : [])
+      .map((gap) => ({ topic: text(gap?.topic), decision: text(gap?.decision), suggested_convention: text(gap?.suggested_convention) }))
+      .filter((gap) => gap.topic && gap.decision),
   };
 };

@@ -55,12 +55,13 @@ export const buildProposalSchema = (vocabulary: DataModelVocabulary): Record<str
   return {
     type: 'object',
     additionalProperties: false,
-    required: ['summary', 'tables', 'excluded', 'open_questions'],
+    required: ['summary', 'tables', 'excluded', 'open_questions', 'convention_gaps'],
     properties: {
       summary: { type: 'string' },
       tables: { type: 'array', items: table },
       excluded: {
         type: 'array',
+        description: 'Tables a reasonable designer would expect that you deliberately left out, and that neither the context nor a convention already rules out. Usually 0-3; [] is normal.',
         items: {
           type: 'object',
           additionalProperties: false,
@@ -68,7 +69,47 @@ export const buildProposalSchema = (vocabulary: DataModelVocabulary): Record<str
           properties: { name: { type: 'string' }, reason: { type: 'string' } },
         },
       },
-      open_questions: stringArray,
+      open_questions: {
+        type: 'array',
+        description: 'Product decisions the context leaves open (at most 4). Never structural choices: conventions decide those.',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['question', 'why_it_matters', 'options', 'recommended_option'],
+          properties: {
+            question: { type: 'string', description: 'The decision, phrased for the product owner (no column or table jargon needed).' },
+            why_it_matters: { type: 'string', description: 'What the product does differently depending on the answer, in one sentence.' },
+            options: {
+              type: 'array',
+              description: '2-4 options.',
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['label', 'schema_effect'],
+                properties: {
+                  label: { type: 'string', description: 'Short answer the owner can pick.' },
+                  schema_effect: { type: 'string', description: 'What this option changes in the tables.' },
+                },
+              },
+            },
+            recommended_option: { type: 'string', description: 'Label of the option this proposal already implements.' },
+          },
+        },
+      },
+      convention_gaps: {
+        type: 'array',
+        description: 'Structural choices you had to make that no convention covers. [] when the conventions covered everything.',
+        items: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['topic', 'decision', 'suggested_convention'],
+          properties: {
+            topic: { type: 'string', description: 'e.g. "delete behavior for run history"' },
+            decision: { type: 'string', description: 'What you chose in this proposal and where (table.column).' },
+            suggested_convention: { type: 'string', description: 'A one-sentence rule that would make this choice automatic next time.' },
+          },
+        },
+      },
     },
   };
 };

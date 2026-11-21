@@ -40,12 +40,41 @@ export type ExcludedTable = {
   reason: string;
 };
 
+export type ProposalQuestionOption = {
+  label: string;
+  /** What choosing this option changes in the tables (shown next to the option). */
+  schema_effect: string;
+};
+
+/**
+ * A product decision the context leaves open. Structural choices (naming, types, keys, delete
+ * behavior, lifecycles) are never questions: conventions decide them. The proposal already
+ * implements `recommended_option`.
+ */
+export type ProposalQuestion = {
+  question: string;
+  why_it_matters: string;
+  options: ProposalQuestionOption[];
+  /** Label of the option the proposal implements. */
+  recommended_option: string;
+};
+
+/** A structural choice no convention covered: the designer made it and suggests a convention. */
+export type ConventionGap = {
+  topic: string;
+  decision: string;
+  suggested_convention: string;
+};
+
 /** Normalized AI output stored in data_model_proposals.proposal. */
 export type DataModelProposalContent = {
   summary: string;
   tables: ProposedTable[];
   excluded: ExcludedTable[];
-  open_questions: string[];
+  /** Older proposals stored plain strings; readers normalize them. */
+  open_questions: ProposalQuestion[];
+  /** Missing on proposals made before convention gaps existed. */
+  convention_gaps?: ConventionGap[];
 };
 
 export type ProposalWarningSeverity = 'error' | 'warning';

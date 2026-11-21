@@ -83,11 +83,11 @@ const deliverToRepo = async (
         return fail(`Merge the data model PR for ${repo.name} first (Data model tab). The API files import those models.`);
       }
     }
-    if (kind === 'list') {
-      // List pages call the API thunks and dumps, and add sidebar links: the API and layout PRs come first.
+    if (kind === 'list' || kind === 'detail') {
+      // Page kinds call the API thunks and dumps and live in the layout's shell: the API and layout PRs come first.
       const required: Array<{ kind: DataModelDeliveryKind; tab: string; why: string }> = [
-        { kind: 'crud', tab: 'API', why: 'The pages load rows with its fetch thunks and dumps.' },
-        { kind: 'layout', tab: 'Layout', why: 'The pages live in its (app) route group and add links to its sidebar.' },
+        { kind: 'crud', tab: 'API', why: 'The pages load and save rows with its thunks and dumps.' },
+        { kind: 'layout', tab: 'Layout', why: 'The pages live in its (app) route group and use its sidebar and breadcrumbs.' },
       ];
       for (const need of required) {
         const prior = history.find((item) => item.proposal_id === proposal.id && (item.kind ?? 'model') === need.kind);
@@ -131,6 +131,8 @@ const deliverToRepo = async (
           ? `Data access v${proposal.version}: CRUD for ${content.tables.length} tables`
           : kind === 'list'
             ? `List pages v${proposal.version}: tables, search and filters`
+            : kind === 'detail'
+              ? `Detail pages v${proposal.version}: summary, edit and related tabs`
             : `App layout v${proposal.version}: sidebar, breadcrumbs and routes`;
     console.log('🚀 [data-model-deliveries] Committing', { repo: snapshot.full_name, branch, files: files.length });
     const commitSha = await commitFilesToBranch({

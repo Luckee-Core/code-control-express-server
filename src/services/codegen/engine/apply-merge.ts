@@ -102,6 +102,16 @@ export const applyMerge = (input: {
         content = content.slice(0, match.index) + replacement + content.slice(match.index + match[0].length);
         break;
       }
+      case 'replace': {
+        const find = render(step.find, null);
+        const at = content.indexOf(find);
+        if (at === -1) {
+          if (step.error) return { error: step.error };
+          break;
+        }
+        content = content.slice(0, at) + render(step.replace, null) + content.slice(at + find.length);
+        break;
+      }
       case 'append_lines': {
         const base = content.trimEnd();
         const lines = missing.map((index) => render(step.line, index));

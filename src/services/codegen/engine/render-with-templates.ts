@@ -1,8 +1,8 @@
 import { Eta } from 'eta';
 import type { CodegenRole, RenderedFile, RenderFinding } from '../types';
 import { applyMerge } from './apply-merge';
-import { itemContext, type CodegenContext } from './build-codegen-context';
-import type { CodegenKind, CodegenRepoState, ManifestFile, TemplateSource } from './types';
+import { itemContext, type CodegenContext, type CodegenItemContext } from './build-codegen-context';
+import type { CodegenKind, CodegenRepoState, ManifestFile, ManifestMerge, TemplateSource } from './types';
 
 /** A rendered file plus the manifest entry that produced it. */
 export type EngineRenderedFile = RenderedFile & { manifest_id: string; template: string | null; convention_keys: string[] };
@@ -25,15 +25,20 @@ const createEta = (): Eta => new Eta({ autoEscape: false, autoTrim: false, useWi
  */
 export const renderMergePaths = (source: TemplateSource, kind: CodegenKind, context: CodegenContext): string[] => {
   const eta = createEta();
+  const render = (entry: ManifestFile, data: object): string => {
+    try {
+      return eta.renderString(entry.path, data);
+    } catch (error) {
+      throw new CodegenTemplateError(`${source.repo} ${entry.id} path: ${error instanceof Error ? error.message : error}`);
+    }
+  };
   const paths = (source.manifest.kinds[kind]?.files ?? [])
     .filter((entry) => entry.mode === 'merge')
-    .map((entry) => {
-      try {
-        return eta.renderString(entry.path, context);
-      } catch (error) {
-        throw new CodegenTemplateError(`${source.repo} ${entry.id} path: ${error instanceof Error ? error.message : error}`);
-      }
-    });
+    .flatMap((entry) =>
+      entry.each === 'table'
+        ? context.tables.map((crud, index) => render(entry, itemContext(context, crud, index)))
+        : [render(entry, context)],
+    );
   return [...new Set(paths)];
 };
 
@@ -120,47 +125,64 @@ export const renderWithTemplates = (input: {
     }
   };
 
+  /**
+   * One merge into one file. `data` is the base context (each = once) or a table's item context
+   * (each = table: the merge covers that table only, as scope once).
+   */
+  const runMerge = (entry: ManifestFile, merge: ManifestMerge, data: CodegenContext | CodegenItemContext, where: string): void => {
+    if (entry.skip_if && renderString(entry.skip_if, data, `${entry.id} skip_if`).trim() === 'true') return;
+    const path = renderString(entry.path, data, `${entry.id} path`);
+    const existing = state.files[path] ?? null;
+    const findingFor = (message: string) =>
+      findings.push({
+        severity: 'error',
+        role,
+        path,
+        message: `${message}. Wire it by hand.`,
+        convention_key: entry.error_convention_key ?? 'codegen.wiring',
+      });
+
+    if (existing === null) {
+      if (merge.on_missing_file === 'skip') return;
+      if (merge.on_missing_file === 'error') {
+        findingFor(merge.missing_file_error ?? `${path} not found`);
+        return;
+      }
+      if (merge.on_missing_file === 'create') {
+        const template = templateText(entry, merge.create_template);
+        push(entry, path, renderString(template, data, where), 'create');
+        return;
+      }
+    }
+
+    const perTable = 'crud' in data;
+    const outcome = applyMerge({
+      merge: perTable ? { ...merge, scope: 'once' } : merge,
+      existing: existing ?? '',
+      tableCount: context.tables.length,
+      render: (template, tableIndex, extra) =>
+        renderString(
+          template,
+          {
+            ...(tableIndex === null || perTable ? data : itemContext(context, context.tables[tableIndex], tableIndex)),
+            ...(extra ?? {}),
+          },
+          `${where} merge`,
+        ),
+    });
+    if ('error' in outcome) findingFor(outcome.error);
+    if ('content' in outcome) push(entry, path, outcome.content, existing === null ? 'create' : 'update');
+  };
+
   for (const entry of entries) {
     if (entry.mode === 'merge') {
       const merge = entry.merge;
       if (!merge) throw new CodegenTemplateError(`${source.repo} manifest entry ${entry.id} has mode merge but no merge spec`);
-      const path = renderString(entry.path, context, `${entry.id} path`);
-      const existing = state.files[path] ?? null;
-      const findingFor = (message: string) =>
-        findings.push({
-          severity: 'error',
-          role,
-          path,
-          message: `${message}. Wire it by hand.`,
-          convention_key: entry.error_convention_key ?? 'codegen.wiring',
-        });
-
-      if (existing === null) {
-        if (merge.on_missing_file === 'skip') continue;
-        if (merge.on_missing_file === 'error') {
-          findingFor(merge.missing_file_error ?? `${path} not found`);
-          continue;
-        }
-        if (merge.on_missing_file === 'create') {
-          const template = templateText(entry, merge.create_template);
-          push(entry, path, renderString(template, context, entry.id), 'create');
-          continue;
-        }
+      if (entry.each === 'table') {
+        context.tables.forEach((crud, index) => runMerge(entry, merge, itemContext(context, crud, index), `${entry.id} (${crud.names.table})`));
+      } else {
+        runMerge(entry, merge, context, entry.id);
       }
-
-      const outcome = applyMerge({
-        merge,
-        existing: existing ?? '',
-        tableCount: context.tables.length,
-        render: (template, tableIndex, extra) =>
-          renderString(
-            template,
-            { ...(tableIndex === null ? context : itemContext(context, context.tables[tableIndex], tableIndex)), ...(extra ?? {}) },
-            `${entry.id} merge`,
-          ),
-      });
-      if ('error' in outcome) findingFor(outcome.error);
-      if ('content' in outcome) push(entry, path, outcome.content, existing === null ? 'create' : 'update');
       continue;
     }
 
@@ -180,6 +202,19 @@ export const renderWithTemplates = (input: {
       context.tables.forEach((crud, index) => {
         if (entry.each === 'table') {
           render(itemContext(context, crud, index), `${entry.id} (${crud.names.table})`);
+          return;
+        }
+        if (entry.each === 'field' || entry.each === 'tab') {
+          const detail = context.pages[index].detail;
+          if (entry.each === 'field') {
+            for (const column of detail.form_fields) {
+              render(itemContext(context, crud, index, undefined, column), `${entry.id} (${crud.names.table}.${column.name})`);
+            }
+          } else {
+            for (const tab of detail.tabs) {
+              render({ ...itemContext(context, crud, index), tab }, `${entry.id} (${crud.names.table} tab ${tab.key})`);
+            }
+          }
           return;
         }
         if (entry.each === 'column') {

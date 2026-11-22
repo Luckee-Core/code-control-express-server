@@ -34,11 +34,11 @@ const ROLE_NOTE: Record<DataModelDeliveryKind, Partial<Record<CodegenRole, strin
     storage:
       'Seeds the gate catalog (`dispatcher_exposed_endpoints`) with the storage health, meta and invoke paths. After merging, run `npm run db:apply-migrations -- <the number below>` and restart storage.',
     dispatcher:
-      'Turns this repo into the project dispatcher (express template ADRs 011-014). On the studio: clone it next to the storage and API repos under the spawn root below, copy `.env.example` to `.env`, fill the three secrets, `npm install`, then start it once with `npm run dev` to check `GET /api/health`. After that the main gateway starts it on demand.',
+      'Turns this repo into the project dispatcher (express template ADRs 011-014). On the studio: clone it next to the storage and API repos under the spawn root below, copy `.env.example` to `.env` (no secrets to fill: the main gateway and this dispatcher issue them at runtime), `npm install`, then let the main gateway start it on demand (it injects the secrets at spawn). Starting it by hand needs the secrets set in `.env`.',
     'dispatcher-web':
-      'Turns this repo into the dispatcher web (nextjs template ADR 022): start/stop storage and the API, toggle gate paths and Try them through the main gateway. On the studio: copy `.env.example` to `.env`, set the admin secret (the dispatcher\'s `DISPATCHER_INFRA_ADMIN_SECRET`) and the main gateway\'s gate secret, `npm install`, `npm run dev`.',
+      'Turns this repo into the dispatcher web (nextjs template ADR 022): start/stop storage and the API, toggle gate paths and Try them through the main gateway. On the studio: copy `.env.example` to `.env`, `npm install`, then start it from the main gateway web UI, which injects the admin secret at runtime and passes through its own gate secret.',
     gateway:
-      'Registers the project on the main gateway (registry service, gateway project, three session tables). After merging: add the two secret env vars below to this repo\'s `.env` (same values as `DISPATCHER_GATE_SECRET` and `DISPATCHER_INFRA_ADMIN_SECRET` in the project dispatcher), run `npm run db:apply-migrations`, and restart the main gateway.',
+      'Registers the project on the main gateway (registry service, gateway project, three session tables). After merging: run `npm run db:apply-migrations` and restart the main gateway. No `.env` changes: the gate and admin secrets are runtime credentials the gateway generates and injects when it spawns the project dispatcher (ADR 015).',
   },
   layout: {
     storage: '',
@@ -90,7 +90,7 @@ export const buildPullRequestBody = (input: {
           `- Ports: dispatcher ${dispatcher.ports.dispatcher}, storage ${dispatcher.ports.storage}, API ${dispatcher.ports.api}, dispatcher web ${dispatcher.ports.web} (all 127.0.0.1)`,
           `- Services: \`${dispatcher.service_ids.storage}\` (\`/api/storage\`), \`${dispatcher.service_ids.api}\` (\`${dispatcher.api_path_prefix}\`); main gateway \`${dispatcher.service_ids.gateway}\``,
           `- Spawn root: \`${dispatcher.spawn_root}\``,
-          `- Secrets: main gateway \`${dispatcher.secrets.main_gate}\` and \`${dispatcher.secrets.main_admin}\`; dispatcher \`DISPATCHER_GATE_SECRET\`, \`DISPATCHER_INFRA_ADMIN_SECRET\` and \`${dispatcher.secrets.storage}\``,
+          `- Secrets (generated at runtime, no \`.env\` values): \`${dispatcher.secrets.main_gate}\` and \`${dispatcher.secrets.main_admin}\` (gateway → dispatcher), \`${dispatcher.secrets.storage}\` (dispatcher → storage and API)`,
           `- Exposed: ${dispatcher.endpoints.map((endpoint) => `\`${endpoint.method} ${endpoint.path}\``).join(', ')}`,
         ]
       : [

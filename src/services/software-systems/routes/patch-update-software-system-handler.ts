@@ -15,13 +15,18 @@ export const patchUpdateSoftwareSystemHandler = async (req: Request, res: Respon
     res.status(400).json({ success: false, error: 'Invalid customer project ID' });
     return;
   }
-  const { name, description } = req.body ?? {};
+  const { name, description, setup_preset_key } = req.body ?? {};
+  if (setup_preset_key !== undefined && setup_preset_key !== null && typeof setup_preset_key !== 'string') {
+    res.status(400).json({ success: false, error: 'setup_preset_key must be a string or null' });
+    return;
+  }
 
   console.log('📥 PATCH /api/data/software-systems/:id', { id });
   try {
     const project = await processUpdateSoftwareSystem(client, id, {
       ...(name !== undefined && { name }),
       ...(description !== undefined && { description }),
+      ...(setup_preset_key !== undefined && { setup_preset_key }),
     });
     res.status(200).json({ success: true, data: project });
   } catch (error) {

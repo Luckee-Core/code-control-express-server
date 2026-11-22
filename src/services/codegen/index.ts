@@ -14,3 +14,5 @@ export { renderForRepo, resolveTemplatePin, readCodegenRepoState } from './engin
 export type { RenderForRepoResult, TargetRepoHead, TemplatePin } from './engine/render-for-repo';
 export { resolveTemplateRepo, listTemplateRepos } from './engine/resolve-template-repo';
 export type { CodegenKind, CodegenManifest, CodegenRepoState, ManifestFile, ManifestPreview, TemplateSource } from './engine/types';
+export { allocateDispatcherPorts, buildDispatcherPlan, extractPorts, DISPATCHER_PORT_BASE } from './dispatcher-plan';
+export type { DispatcherEndpoint, DispatcherPlan, DispatcherPorts } from './dispatcher-plan';

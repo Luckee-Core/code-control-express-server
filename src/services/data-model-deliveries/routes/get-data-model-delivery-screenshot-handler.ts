@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { requireDataClient } from '../../../utils/http/require-data-client';
 import type { CodegenRole } from '../../codegen';
 import { sendProposalError } from '../../data-model-proposals/routes/send-proposal-error';
-import { DELIVERY_ROLES, readDeliveryKind } from '../config';
+import { ALL_DELIVERY_ROLES, readDeliveryKind } from '../config';
 import { processScreenshotDataModelDelivery } from '../process-screenshot-data-model-delivery';
 
 /**
@@ -12,10 +12,10 @@ export const getDataModelDeliveryScreenshotHandler = async (req: Request, res: R
   const client = requireDataClient(res);
   if (!client) return;
   const proposalId = typeof req.query.proposal_id === 'string' ? req.query.proposal_id.trim() : '';
-  const role = DELIVERY_ROLES.find((candidate) => candidate === req.query.role) as CodegenRole | undefined;
+  const role = ALL_DELIVERY_ROLES.find((candidate) => candidate === req.query.role) as CodegenRole | undefined;
   const kind = readDeliveryKind(req.query.kind);
   if (!proposalId || !role || !kind) {
-    res.status(400).json({ success: false, error: `proposal_id and role (${DELIVERY_ROLES.join(', ')}) are required` });
+    res.status(400).json({ success: false, error: `proposal_id and role (${ALL_DELIVERY_ROLES.join(', ')}) are required` });
     return;
   }
   console.log('📥 GET /api/data/data-model-deliveries/screenshot', { proposalId, role });

@@ -3,12 +3,13 @@ import type { CanonicalDataClient } from '../canonical-data-client';
 import { renderForRepo, type CodegenRole, type RenderForRepoResult, type TemplatePin } from '../codegen';
 import type { DeliveryInputs } from './load-delivery-inputs';
 import type { RepoHead } from './read-repo-render-state';
+import { resolveDispatcherPlan } from './resolve-dispatcher-plan';
 
 /**
  * Renders one delivery kind for one role against the repo's default branch with the role's
  * template repo (codegen/ at its default branch head, or a pinned commit) and runs the
  * convention checks: model = migrations + src/model; crud = data-access layer; layout = web app
- * shell (sidebar, breadcrumbs, routes).
+ * shell (sidebar, breadcrumbs, routes); dispatcher = the project dispatcher plan's files.
  */
 export const renderDeliveryFiles = async (input: {
   client: CanonicalDataClient;
@@ -17,8 +18,11 @@ export const renderDeliveryFiles = async (input: {
   inputs: DeliveryInputs;
   head: RepoHead;
   template?: TemplatePin;
-}): Promise<RenderForRepoResult> =>
-  renderForRepo({
+}): Promise<RenderForRepoResult> => {
+  if (input.kind === 'dispatcher' && !input.inputs.dispatcher) {
+    input.inputs.dispatcher = await resolveDispatcherPlan(input.client, input.inputs.proposal.software_system_id);
+  }
+  return renderForRepo({
     client: input.client,
     kind: input.kind,
     role: input.role,
@@ -29,4 +33,6 @@ export const renderDeliveryFiles = async (input: {
     head: { ref: input.head.ref, base_sha: input.head.base_sha },
     template: input.template,
     app: input.inputs.app,
+    dispatcher: input.kind === 'dispatcher' ? input.inputs.dispatcher : null,
   });
+};

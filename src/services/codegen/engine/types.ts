@@ -4,7 +4,7 @@
  * Code Control only builds the data each template receives; the code shape is in the template repo.
  */
 
-export type CodegenKind = 'model' | 'crud' | 'layout' | 'list' | 'detail' | 'dashboard';
+export type CodegenKind = 'model' | 'crud' | 'layout' | 'list' | 'detail' | 'dashboard' | 'dispatcher';
 
 /**
  * once = one render; table = one per table; operation = one per table operation;
@@ -70,6 +70,12 @@ export type ManifestFile = {
   /** Output path (Eta template). */
   path: string;
   each: ManifestEach;
+  /**
+   * Only render for these repo roles (default: every role that uses this template repo). Lets one
+   * template serve several roles, e.g. the express template's dispatcher files (role dispatcher)
+   * and main gateway migrations (role gateway).
+   */
+  roles?: string[];
   /** each = operation: only these operation kinds. */
   operation_kinds?: string[];
   /** write = always (re)write; if_missing = only when the repo lacks the file; merge = edit the existing file. */

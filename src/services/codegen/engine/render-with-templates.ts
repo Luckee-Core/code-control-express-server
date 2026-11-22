@@ -175,6 +175,7 @@ export const renderWithTemplates = (input: {
   };
 
   for (const entry of entries) {
+    if (entry.roles && !entry.roles.includes(role)) continue;
     if (entry.mode === 'merge') {
       const merge = entry.merge;
       if (!merge) throw new CodegenTemplateError(`${source.repo} manifest entry ${entry.id} has mode merge but no merge spec`);

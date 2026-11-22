@@ -3,6 +3,7 @@ import { deleteSoftwareSystemHandler } from './routes/delete-software-system-han
 import { getSoftwareSystemAiCallsHandler } from './routes/get-software-system-ai-calls-handler';
 import { getCustomerSoftwareSystemsHandler } from './routes/get-customer-software-systems-handler';
 import { getSoftwareSystemByIdHandler } from './routes/get-software-system-by-id-handler';
+import { getSoftwareSystemDispatcherPlanHandler } from './routes/get-software-system-dispatcher-plan-handler';
 import { getSoftwareSystemsHandler } from './routes/get-software-systems-handler';
 import { patchUpdateSoftwareSystemHandler } from './routes/patch-update-software-system-handler';
 import { postCreateSoftwareSystemHandler } from './routes/post-create-software-system-handler';
@@ -15,6 +16,7 @@ export const createSoftwareSystemsRouter = (): Router => {
   router.get('/', getSoftwareSystemsHandler);
   router.get('/customer/:customerId', getCustomerSoftwareSystemsHandler);
   router.get('/:id/ai-calls', getSoftwareSystemAiCallsHandler);
+  router.get('/:id/dispatcher-plan', getSoftwareSystemDispatcherPlanHandler);
   router.get('/:id', getSoftwareSystemByIdHandler);
   router.post('/', postCreateSoftwareSystemHandler);
   router.patch('/:id', patchUpdateSoftwareSystemHandler);

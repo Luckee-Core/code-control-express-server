@@ -46,4 +46,5 @@ export const ASSIGNABLE_REPO_ROLES = [
   'console',
   'mobile',
   'python',
+  'gateway',
 ] as const;

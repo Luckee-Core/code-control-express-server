@@ -5,6 +5,7 @@ import {
   upsertDataModelDelivery,
 } from '../../data/data-model-deliveries';
 import { getSoftwareSystemReposBySoftwareSystemId } from '../../data/software-system-repos';
+import { getSoftwareSystemById } from '../../data/software-systems';
 import type { DataModelDelivery, DataModelDeliveryKind } from '../../model/data-model-delivery';
 import type { SoftwareSystemRepo } from '../../model/software-system-repo';
 import { parseGithubRepoUrl } from '../../utils/parse-github-repo-url';
@@ -26,6 +27,7 @@ import { deliveryBranchName, deliveryRolesForKind, isRedeliverableKind } from '.
 import { loadDeliveryInputs, type DeliveryInputs } from './load-delivery-inputs';
 import { readRepoHead } from './read-repo-render-state';
 import { renderDeliveryFiles } from './render-delivery-files';
+import { ensureGatewayRepoLinked, resolveDispatcherPlan, saveDispatcherPorts } from './resolve-dispatcher-plan';
 import { resolveRoleRepo } from './resolve-role-repos';
 import { syncDeliveryPullRequest } from './sync-delivery-pull-request';
 import type { DeliveryTarget } from './types';
@@ -83,6 +85,19 @@ const deliverToRepo = async (
         return fail(`Merge the data model PR for ${repo.name} first (Data model tab). The API files import those models.`);
       }
     }
+    if (kind === 'dispatcher') {
+      // Every file names repos, ports and spawn folders: the plan must be complete first.
+      const problems = inputs.dispatcher?.problems ?? [];
+      if (problems.length > 0) return fail(problems.join(' '));
+      if (role === 'storage') {
+        // The catalog seed takes the next migration number: the model PR's migrations must be on main first.
+        const model = history.find((item) => item.proposal_id === proposal.id && (item.kind ?? 'model') === 'model');
+        const synced = model ? await syncDeliveryPullRequest(client, model) : null;
+        if (synced?.status !== 'merged') {
+          return fail(`Merge the data model PR for ${repo.name} first (Data model tab). The catalog seed migration is numbered after its migrations.`);
+        }
+      }
+    }
     if (kind === 'list' || kind === 'detail' || kind === 'dashboard') {
       // Page kinds call the API thunks and dumps and live in the layout's shell: the API and layout PRs come first.
       // The dashboard links to list and detail pages only where they exist, so those PRs are optional.
@@ -136,6 +151,8 @@ const deliverToRepo = async (
               ? `Detail pages v${proposal.version}: summary, edit and related tabs`
             : kind === 'dashboard'
               ? `Dashboard v${proposal.version}: table summaries and recent activity`
+            : kind === 'dispatcher'
+              ? `Project dispatcher v${proposal.version}: ${role === 'gateway' ? `register ${inputs.dispatcher?.project_id ?? 'the project'} on the main gateway` : role === 'storage' ? 'exposed endpoint catalog seed' : role === 'dispatcher-web' ? 'dispatcher web' : 'loopback dispatcher for storage and API'}`
             : `App layout v${proposal.version}: sidebar, breadcrumbs and routes`;
     console.log('🚀 [data-model-deliveries] Committing', { repo: snapshot.full_name, branch, files: files.length });
     const commitSha = await commitFilesToBranch({
@@ -154,7 +171,7 @@ const deliverToRepo = async (
       name: `${kind}-v${proposal.version}`,
       commitSha,
     });
-    const body = buildPullRequestBody({ kind, proposal, content, role, files, previewImageUrl });
+    const body = buildPullRequestBody({ kind, proposal, content, role, files, previewImageUrl, dispatcher: inputs.dispatcher ?? null });
     const existing = await findOpenPullRequest(snapshot.ref, branch);
     if (existing && previewImageUrl) {
       // Re-render: refresh the body so the screenshot matches the new commit.
@@ -238,10 +255,18 @@ export const processDeliverDataModel = async (
   input: { proposalId: string; roles?: CodegenRole[]; autoMerge?: boolean; kind: DataModelDeliveryKind },
 ): Promise<DeliveryTarget[]> => {
   const inputs = await loadDeliveryInputs(client, input.proposalId);
-  const [repos, existing] = await Promise.all([
+  let [repos, existing] = await Promise.all([
     getSoftwareSystemReposBySoftwareSystemId(client, inputs.proposal.software_system_id),
     listDataModelDeliveriesByProposalId(client, input.proposalId),
   ]);
+  if (input.kind === 'dispatcher') {
+    // The main gateway repo is shared: tag it on this system so its PR has a target row.
+    const system = await getSoftwareSystemById(client, inputs.proposal.software_system_id);
+    if (system) repos = await ensureGatewayRepoLinked(client, system, repos);
+    inputs.dispatcher = await resolveDispatcherPlan(client, inputs.proposal.software_system_id);
+    // Keep the ports once anything is delivered, so every repo and later deliveries agree.
+    if (inputs.dispatcher.problems.length === 0) await saveDispatcherPorts(client, inputs.proposal.software_system_id, inputs.dispatcher);
+  }
   const roles = deliveryRolesForKind(input.kind).filter((role) => !input.roles || input.roles.includes(role));
 
   const targets: DeliveryTarget[] = [];

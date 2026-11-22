@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { requireDataClient } from '../../../utils/http/require-data-client';
 import type { CodegenRole } from '../../codegen';
 import { sendProposalError } from '../../data-model-proposals/routes/send-proposal-error';
-import { DELIVERY_ROLES, readDeliveryKind } from '../config';
+import { ALL_DELIVERY_ROLES, readDeliveryKind } from '../config';
 import { processDeliverDataModel } from '../process-deliver-data-model';
 
 /**
@@ -17,10 +17,10 @@ export const postDataModelDeliveryHandler = async (req: Request, res: Response):
   const autoMerge = body.auto_merge === true;
   const proposalId = typeof body.proposal_id === 'string' ? body.proposal_id.trim() : '';
   const roles = Array.isArray(body.roles)
-    ? DELIVERY_ROLES.filter((role) => (body.roles as unknown[]).includes(role))
+    ? ALL_DELIVERY_ROLES.filter((role) => (body.roles as unknown[]).includes(role))
     : undefined;
   if (!proposalId || !kind || (roles && roles.length === 0)) {
-    res.status(400).json({ success: false, error: `proposal_id is required; roles must be some of ${DELIVERY_ROLES.join(', ')}` });
+    res.status(400).json({ success: false, error: `proposal_id is required; roles must be some of ${ALL_DELIVERY_ROLES.join(', ')}` });
     return;
   }
   console.log('📥 POST /api/data/data-model-deliveries', { proposalId, kind, roles: roles ?? 'all', autoMerge });

@@ -1,10 +1,12 @@
 import { listDataModelDeliveriesByProposalId } from '../../data/data-model-deliveries';
 import { getDataModelProposalById } from '../../data/data-model-proposals';
 import { getSoftwareSystemReposBySoftwareSystemId } from '../../data/software-system-repos';
+import { getSoftwareSystemById } from '../../data/software-systems';
 import type { DataModelDeliveryKind } from '../../model/data-model-delivery';
 import type { CanonicalDataClient } from '../canonical-data-client';
 import { ProposalRequestError } from '../data-model-proposals/proposal-request-error';
 import { deliveryRolesForKind } from './config';
+import { ensureGatewayRepoLinked } from './resolve-dispatcher-plan';
 import { resolveRoleRepo } from './resolve-role-repos';
 import { syncDeliveryPullRequest } from './sync-delivery-pull-request';
 import type { DeliveryTarget } from './types';
@@ -22,10 +24,14 @@ export const processListDataModelDeliveries = async (
   if (!proposal) {
     throw new ProposalRequestError(404, 'Proposal not found');
   }
-  const [repos, stored] = await Promise.all([
+  let [repos, stored] = await Promise.all([
     getSoftwareSystemReposBySoftwareSystemId(client, proposal.software_system_id),
     listDataModelDeliveriesByProposalId(client, proposalId),
   ]);
+  if (kind === 'dispatcher') {
+    const system = await getSoftwareSystemById(client, proposal.software_system_id);
+    if (system) repos = await ensureGatewayRepoLinked(client, system, repos);
+  }
   // Pick up PRs merged or closed on GitHub so the panel never offers to re-open them.
   const deliveries = await Promise.all(
     stored.filter((delivery) => (delivery.kind ?? 'model') === kind).map((delivery) => syncDeliveryPullRequest(client, delivery)),

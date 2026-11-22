@@ -3,6 +3,7 @@ import type { CanonicalDataClient } from '../../canonical-data-client';
 import { getDefaultBranchHead, getFileText, listTreePaths, type GithubRepoRef } from '../../github';
 import { checkRenderedFiles, type FileCheckConvention } from '../check-rendered-files';
 import type { CodegenRole, CodegenVocabulary, RenderFinding } from '../types';
+import type { DispatcherPlan } from '../dispatcher-plan';
 import { buildCodegenContext, type CodegenApp } from './build-codegen-context';
 import { loadTemplateSource } from './load-template-source';
 import { CodegenTemplateError, renderMergePaths, renderPreviewHtml, renderWithTemplates, type EngineRenderedFile } from './render-with-templates';
@@ -49,6 +50,7 @@ export const readCodegenRepoState = async (input: {
   version: number;
   head: TargetRepoHead | null;
   app?: CodegenApp;
+  dispatcher?: DispatcherPlan | null;
 }): Promise<CodegenRepoState> => {
   if (!input.head) return { paths: new Set(), files: {} };
   const paths = await listTreePaths(input.head.ref, input.head.base_sha);
@@ -75,6 +77,7 @@ export const renderForRepo = async (input: {
   head: TargetRepoHead | null;
   template?: TemplatePin;
   app?: CodegenApp;
+  dispatcher?: DispatcherPlan | null;
 }): Promise<RenderForRepoResult> => {
   const pin = await resolveTemplatePin(input.client, input.role, input.template);
   const source = await loadTemplateSource(pin.ref, pin.sha);

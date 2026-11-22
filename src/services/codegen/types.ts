@@ -2,8 +2,11 @@ import type { ColumnType } from '../../model/column-type';
 import type { LifecycleOption } from '../../model/lifecycle-option';
 import type { StandardColumn } from '../../model/standard-column';
 
-/** Repo role a rendered file belongs to (repo_roles.key). */
-export type CodegenRole = 'storage' | 'express' | 'web';
+/**
+ * Repo role a rendered file belongs to (repo_roles.key). dispatcher, dispatcher-web and gateway only
+ * receive the `dispatcher` kind (gateway = the shared main gateway repo).
+ */
+export type CodegenRole = 'storage' | 'express' | 'web' | 'dispatcher' | 'dispatcher-web' | 'gateway';
 
 /** One file Code Control writes into a repo. */
 export type RenderedFile = {

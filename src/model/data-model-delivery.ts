@@ -1,5 +1,5 @@
 /** model = migrations + src/model; crud = data-access layer (CRUD, services, api, dumps, thunks). */
-export type DataModelDeliveryKind = 'model' | 'crud' | 'layout' | 'list' | 'detail' | 'dashboard';
+export type DataModelDeliveryKind = 'model' | 'crud' | 'layout' | 'list' | 'detail' | 'dashboard' | 'dispatcher';
 
 export type DataModelDeliveryStatus = 'pending' | 'opened' | 'merged' | 'closed' | 'failed';
 

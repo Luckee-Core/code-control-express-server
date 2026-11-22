@@ -3,6 +3,7 @@ import { buildRenderColumns } from '../build-render-columns';
 import { buildTablePages, type TablePage } from '../table-pages';
 import type { ListColumn } from '../table-list-view';
 import { buildCrudTables, type CrudOperation, type CrudTable } from '../crud-operations';
+import type { DispatcherPlan } from '../dispatcher-plan';
 import type { CodegenRole, CodegenVocabulary } from '../types';
 import { templateHelpers, type TemplateHelpers } from './helpers';
 import type { CodegenKind, CodegenRepoState } from './types';
@@ -24,6 +25,8 @@ export type CodegenContext = {
   app: CodegenApp;
   /** Web routes per table (same order as tables): paths, route constants, whether the list page exists. */
   pages: TablePage[];
+  /** kind dispatcher: ids, ports, repos, spawn folders, secret names and exposed endpoints; null otherwise. */
+  dispatcher: DispatcherPlan | null;
   h: TemplateHelpers;
 };
 
@@ -67,6 +70,7 @@ export const buildCodegenContext = (input: {
   /** Overrides the migration number derived from state.paths (e.g. from a migrations/ listing). */
   highestMigrationNumber?: number;
   app?: CodegenApp;
+  dispatcher?: DispatcherPlan | null;
 }): CodegenContext => {
   const tables = buildCrudTables(
     input.content.tables.map((table) => ({ table, columns: buildRenderColumns(table, input.vocabulary) })),
@@ -83,6 +87,7 @@ export const buildCodegenContext = (input: {
     migrations: { next: highest + 1 },
     app: input.app ?? { name: 'App', slug: 'app' },
     pages: buildTablePages(tables, input.state.paths),
+    dispatcher: input.dispatcher ?? null,
     h: templateHelpers,
   };
 };

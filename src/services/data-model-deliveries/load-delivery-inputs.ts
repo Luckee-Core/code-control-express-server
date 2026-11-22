@@ -7,7 +7,7 @@ import { getSoftwareSystemById } from '../../data/software-systems';
 import { listStandardColumns } from '../../data/standard-columns';
 import type { DataModelProposal, DataModelProposalContent } from '../../model/data-model-proposal';
 import type { CanonicalDataClient } from '../canonical-data-client';
-import { toKebabCase, type CodegenApp, type CodegenVocabulary, type FileCheckConvention } from '../codegen';
+import { toKebabCase, type CodegenApp, type CodegenVocabulary, type DispatcherPlan, type FileCheckConvention } from '../codegen';
 import { ProposalRequestError } from '../data-model-proposals/proposal-request-error';
 
 export type DeliveryInputs = {
@@ -17,6 +17,8 @@ export type DeliveryInputs = {
   checks: FileCheckConvention[];
   /** The software system's name and slug, for app chrome (sidebar brand, storage keys). */
   app: CodegenApp;
+  /** kind dispatcher: the project dispatcher plan, resolved on first render (renderDeliveryFiles). */
+  dispatcher?: DispatcherPlan;
 };
 
 const snapshotVocabulary = (snapshot: Record<string, unknown> | null | undefined): CodegenVocabulary | null => {

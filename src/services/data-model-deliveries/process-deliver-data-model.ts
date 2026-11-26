@@ -16,6 +16,7 @@ import {
   createPullRequest,
   deleteBranch,
   findOpenPullRequest,
+  getFileText,
   listTreePaths,
   mergePullRequest,
   updatePullRequestBody,
@@ -227,7 +228,7 @@ const deliverToRepo = async (
   }
 };
 
-/** A merged layout / list-pages delivery is stale when rendering against the repo today would change files. */
+/** A merged layout / page delivery is stale when rendering against the repo today would change a file's content. */
 const hasNewFiles = async (
   client: CanonicalDataClient,
   inputs: DeliveryInputs,
@@ -238,7 +239,11 @@ const hasNewFiles = async (
   try {
     const head = await readRepoHead(repo);
     const { files } = await renderDeliveryFiles({ client, kind, role, inputs, head });
-    return files.length > 0;
+    // Overwritten files come back as updates even when identical: only a real difference counts.
+    const changed = await Promise.all(
+      files.map(async (file) => file.action === 'create' || (await getFileText(head.ref, file.path, head.base_sha)) !== file.content),
+    );
+    return changed.some(Boolean);
   } catch (error) {
     console.warn('⚠️ [data-model-deliveries] Re-render check failed', { repo: repo.name, kind, error: errorMessage(error) });
     return false;

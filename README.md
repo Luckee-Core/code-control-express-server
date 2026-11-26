@@ -88,6 +88,7 @@ Generated code comes from each role's template repo: `codegen/manifest.json` plu
 **Dev script:**
 
 - **Agent E2E:** `npx ts-node scripts/agent-e2e/index.ts --templates <dir> --template-repos <dir> --storage <absolute path to the storage repo>` runs the whole PR → convention → template chain against an in-memory GitHub and a scripted Anthropic stand-in. Add `--keep-alive` to leave the stack running for UI testing.
+- **Build all E2E:** `npx ts-node scripts/build-run-e2e/index.ts --templates <dir> --template-repos <dir> --storage <absolute path to the storage repo>` runs "Build all" through every tab against the in-memory GitHub: checks before start, a pause on a PR that will not merge, continue, re-running a built version, and cancel.
 
 ## GitHub repo creation
 

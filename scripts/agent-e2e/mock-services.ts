@@ -16,6 +16,8 @@ const sha = (value: unknown): string => crypto.createHash('sha1').update(JSON.st
 
 export class MockGithub {
   repos = new Map<string, Repo>();
+  /** Repos whose PRs refuse to merge (405), e.g. to test a build pausing on a merge conflict. */
+  blockedMerges = new Set<string>();
 
   /** Creates a repo whose default branch has one commit with these files. */
   createRepo(fullName: string, files: Record<string, string>): string {
@@ -158,6 +160,7 @@ export class MockGithub {
       }
       if (method === 'PUT' && m[2]) {
         if (pull.state !== 'open') return { status: 405, json: { message: 'Pull Request is not mergeable' } };
+        if (this.blockedMerges.has(fullName)) return { status: 405, json: { message: 'Merge conflict' } };
         const merged = this.mergeCommit(fullName, repo.refs.get(pull.base)!, repo.refs.get(pull.head)!, String(body?.commit_title));
         repo.refs.set(pull.base, merged);
         pull.state = 'closed';

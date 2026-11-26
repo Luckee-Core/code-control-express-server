@@ -18,6 +18,7 @@ import {
   type FileCheckConvention,
   type TemplateSource,
 } from '../codegen';
+import { buildDispatcherPlan } from '../codegen/dispatcher-plan';
 import { SAMPLE_DATA_MODELS } from '../codegen/sample-data-model';
 
 export type SampleDataModel = { version: number; content: DataModelProposalContent; vocabulary: CodegenVocabulary; label: string };
@@ -47,6 +48,22 @@ export const loadSampleDataModel = async (client: CanonicalDataClient, deliveryI
   return { version: sample.version, content: sample.content, vocabulary, label: 'built-in sample data model' };
 };
 
+/** The dispatcher kind needs a project plan: a sample project with every repo named and ports set. */
+const SAMPLE_DISPATCHER_PLAN = buildDispatcherPlan({
+  slug: 'sample-app',
+  name: 'Sample App',
+  description: null,
+  repos: {
+    storage: 'sample-app-storage-express-server',
+    express: 'sample-app-express-server',
+    dispatcher: 'sample-app-express-dispatcher-server',
+    dispatcher_web: 'sample-app-dispatcher-web',
+  },
+  ports: { dispatcher: 4100, storage: 4101, api: 4102, web: 4103 },
+  portsSaved: true,
+  studioReposRoot: '/studio/repos',
+});
+
 /**
  * Renders every kind in a template source for a sample data model against an empty repo, and
  * reports template errors, convention check failures and syntax errors in the generated code.
@@ -64,7 +81,8 @@ export const renderTemplateSample = (input: {
   for (const kind of Object.keys(input.source.manifest.kinds) as CodegenKind[]) {
     const state = { paths: new Set<string>(), files: {} };
     try {
-      const context = buildCodegenContext({ role, kind, content: input.sample.content, vocabulary: input.sample.vocabulary, version: input.sample.version, state });
+      const dispatcher = kind === 'dispatcher' ? SAMPLE_DISPATCHER_PLAN : null;
+      const context = buildCodegenContext({ role, kind, content: input.sample.content, vocabulary: input.sample.vocabulary, version: input.sample.version, state, dispatcher });
       const rendered = renderWithTemplates({ source: input.source, kind, role, context, state });
       for (const file of rendered.files) {
         files.push({ kind, path: file.path, content: file.content });

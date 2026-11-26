@@ -17,6 +17,7 @@ ADRs for the **Code Control Express Server**.
 9. [009 – Storage / API split](./009-storage-api-split.md) — CRUD via `code-generator-storage-server`; no Postgres in this repo.
 10. [010 – Hybrid CRM via My Ops Tracker](./010-hybrid-crm-ops-tracker.md) — customers/projects read from My Ops Tracker through the gateway.
 11. [011 – Ticket builds](./011-ticket-builds.md) — ops ticket → reviewed contract-first plan → one Cursor agent and PR per repo; ops write-back.
+12. [012 – Build all](./012-system-build-runs.md) — deliver an approved data model through every tab in order, squash-merging each PR; pause, continue, cancel.
 
 ## How to use
 

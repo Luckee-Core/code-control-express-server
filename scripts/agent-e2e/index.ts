@@ -57,7 +57,8 @@ const readTree = (dir: string, skip = ['node_modules', '.git', 'dist', '.next', 
   return files;
 };
 
-const PROCESS_FILE = 'src/services/notes/process-delete-note.ts';
+/** A generated file the PR agent deletes in its revision (the routes barrel still imports it). */
+const PROCESS_FILE = 'src/services/notes/routes/delete-note-handler.ts';
 const TEMPLATE_DELETE = '.cursor/architecture/009-stripe-checkout-one-time-payment.md';
 
 const fenced = (user: string, file: string): string => {
@@ -78,8 +79,8 @@ const aiResponder = ({ system, user }: { system: string; user: string }): unknow
     return {
       summary: 'Reject non-object JSON bodies with 400 before picking fields.',
       edits: [{ path: file, content: content.replace(PICK_LINE, `${VALIDATION_GUARD}${PICK_LINE}`), explanation: 'Validate the body shape (feedback).' }],
-      // The revision also deletes a process file (its handler still imports it, so the dangling-import check fires).
-      deletes: user.includes('Earlier attempt') ? [{ path: PROCESS_FILE, explanation: 'Handlers call the data wrapper directly.' }] : [],
+      // The revision also deletes a handler (the routes barrel still imports it, so the dangling-import check fires).
+      deletes: user.includes('Earlier attempt') ? [{ path: PROCESS_FILE, explanation: 'Notes are never deleted.' }] : [],
       notes: user.includes('Earlier attempt') ? ['Revised after reviewer response'] : [],
     };
   }
@@ -228,7 +229,7 @@ const main = async (): Promise<void> => {
     check(pr.versions.length === 2 && pr.versions[0].status === 'superseded', 'v1 superseded, versions listed');
     const deleteEdit = pr.pr.edits.find((edit: any) => edit.path === PROCESS_FILE);
     check(deleteEdit?.after_content === null && typeof deleteEdit?.before_content === 'string', 'v2 proposes deleting the process file (after_content null)');
-    check(pr.run.findings.some((finding: any) => finding.convention_key === 'agent.dangling_import' && finding.path.endsWith('delete-note-handler.ts')), 'dangling-import check flags the handler that still imports it');
+    check(pr.run.findings.some((finding: any) => finding.convention_key === 'agent.dangling_import' && finding.path.endsWith('routes/index.ts')), 'dangling-import check flags the routes barrel that still imports it');
     const prRunId = revised.data.id;
 
     const approvedPr = await request('POST', `/agent-runs/${prRunId}/approve`, { note: 'looks right' });
@@ -302,10 +303,10 @@ const main = async (): Promise<void> => {
     check(approvedTmpl.status === 200 && approvedTmpl.data.run.status === 'approved', `template PR merged (${approvedTmpl.error ?? ''})`);
     check(github.treeAt('tmpl/express-server-template', 'main')!.get('codegen/crud/express/handler-post.ts.eta')!.includes('Body must be a JSON object'), 'template main has the new template');
     check(!github.treeAt('tmpl/express-server-template', 'main')!.has(TEMPLATE_DELETE), 'deleted template file gone from main after merge');
-    // The templates now generate the guard, but still generate the process file the PR deleted.
+    // The templates now generate the guard, but still generate the handler the PR deleted.
     check(
       sql(`select convergence || ':' || (convergence_detail->'differing_paths')::text from data_model_deliveries where id='${deliveryId}'`) === `diverged:["${PROCESS_FILE}"]`,
-      'convergence: guard reproduced; the PR-deleted process file is the only difference',
+      'convergence: guard reproduced; the PR-deleted handler is the only difference',
     );
     check(github.repos.get('tmpl/express-storage-server-template')!.pulls[0].merged, 'storage template PR merged too');
     check(sql(`select string_agg(distinct status, ',' order by status) from convention_change_propagations where run_id='${templateDraft.id}'`) === 'merged,not_needed', 'propagations merged (web not_needed)');

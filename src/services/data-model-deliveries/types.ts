@@ -1,5 +1,6 @@
 import type { DataModelDelivery } from '../../model/data-model-delivery';
 import type { SoftwareSystemRepo } from '../../model/software-system-repo';
+import type { SystemBuildRepoPhase } from '../../model/system-build-run-step';
 import type { CodegenRole, RenderedFile, RenderFinding } from '../codegen';
 
 /** One role's target repo and its delivery for a proposal (either may be missing). */
@@ -31,3 +32,17 @@ export type DeliveryScreenshot = {
   height: number;
   png_base64: string;
 };
+
+/** Where one repo's delivery is now (Build all's live view). */
+export type DeliveryProgressEvent = {
+  role: CodegenRole;
+  repo: string;
+  phase: SystemBuildRepoPhase;
+  files?: number | null;
+  pr_url?: string | null;
+  pr_number?: number | null;
+  error?: string | null;
+};
+
+/** Called as each repo moves through a delivery; must not throw. */
+export type DeliveryProgressListener = (event: DeliveryProgressEvent) => Promise<void>;

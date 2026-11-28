@@ -31,7 +31,7 @@ import { renderDeliveryFiles } from './render-delivery-files';
 import { ensureGatewayRepoLinked, resolveDispatcherPlan, saveDispatcherPorts } from './resolve-dispatcher-plan';
 import { resolveRoleRepo } from './resolve-role-repos';
 import { syncDeliveryPullRequest } from './sync-delivery-pull-request';
-import type { DeliveryTarget } from './types';
+import type { DeliveryProgressEvent, DeliveryProgressListener, DeliveryTarget } from './types';
 
 const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
@@ -40,6 +40,17 @@ const repoFullName = (repo: SoftwareSystemRepo): string => {
   const parsed = parseGithubRepoUrl(repo.repo_url);
   return parsed.success ? `${parsed.owner}/${parsed.repo}` : repo.name;
 };
+
+type ReportPhase = (phase: DeliveryProgressEvent['phase'], extra?: Omit<DeliveryProgressEvent, 'role' | 'repo' | 'phase'>) => Promise<void>;
+
+/** The finished delivery as a progress phase: merged, PR left open, or failed. */
+const finalProgress = (delivery: DataModelDelivery): Omit<DeliveryProgressEvent, 'role' | 'repo'> => ({
+  phase: delivery.status === 'merged' ? 'merged' : delivery.status === 'opened' || delivery.status === 'pending' ? 'open' : 'failed',
+  files: delivery.files?.length ?? null,
+  pr_url: delivery.pr_url || null,
+  pr_number: delivery.pr_number,
+  error: delivery.status === 'merged' ? null : delivery.error,
+});
 
 /**
  * Renders, commits and opens (or updates) the PR for one repo. Failures are stored on the
@@ -52,6 +63,7 @@ const deliverToRepo = async (
   repo: SoftwareSystemRepo,
   autoMerge: boolean,
   kind: DataModelDeliveryKind,
+  report: ReportPhase,
 ): Promise<DataModelDelivery> => {
   const { proposal, content } = inputs;
   const branch = deliveryBranchName(kind, proposal.version);
@@ -135,6 +147,7 @@ const deliverToRepo = async (
         );
       }
     }
+    await report('rendering');
     const { files, findings, template, preview } = await renderDeliveryFiles({ client, kind, role, inputs, head: snapshot });
     const errors = findings.filter((finding) => finding.severity === 'error');
     if (errors.length > 0) {
@@ -155,6 +168,7 @@ const deliverToRepo = async (
             : kind === 'dispatcher'
               ? `Project dispatcher v${proposal.version}: ${role === 'gateway' ? `register ${inputs.dispatcher?.project_id ?? 'the project'} on the main gateway` : role === 'storage' ? 'exposed endpoint catalog seed' : role === 'dispatcher-web' ? 'dispatcher web' : 'loopback dispatcher for storage and API'}`
             : `App layout v${proposal.version}: sidebar, breadcrumbs and routes`;
+    await report('committing', { files: files.length });
     console.log('🚀 [data-model-deliveries] Committing', { repo: snapshot.full_name, branch, files: files.length });
     const commitSha = await commitFilesToBranch({
       ref: snapshot.ref,
@@ -164,6 +178,7 @@ const deliverToRepo = async (
       files: files.map((file) => ({ path: file.path, content: file.content })),
     });
 
+    await report('opening_pr', { files: files.length });
     // Screenshot of the template's preview page (layout), linked from the PR body.
     const previewImageUrl = await publishPreviewImage({
       ref: snapshot.ref,
@@ -195,6 +210,7 @@ const deliverToRepo = async (
     let status: DataModelDelivery['status'] = 'opened';
     let note: string | null = null;
     if (autoMerge) {
+      await report('merging', { files: files.length, pr_url: pullRequest.html_url, pr_number: pullRequest.number });
       const merged = await mergePullRequest({ ref: snapshot.ref, number: pullRequest.number, title });
       if (merged.ok) {
         status = 'merged';
@@ -257,7 +273,7 @@ const hasNewFiles = async (
  */
 export const processDeliverDataModel = async (
   client: CanonicalDataClient,
-  input: { proposalId: string; roles?: CodegenRole[]; autoMerge?: boolean; kind: DataModelDeliveryKind },
+  input: { proposalId: string; roles?: CodegenRole[]; autoMerge?: boolean; kind: DataModelDeliveryKind; onProgress?: DeliveryProgressListener },
 ): Promise<DeliveryTarget[]> => {
   const inputs = await loadDeliveryInputs(client, input.proposalId);
   let [repos, existing] = await Promise.all([
@@ -273,6 +289,23 @@ export const processDeliverDataModel = async (
     if (inputs.dispatcher.problems.length === 0) await saveDispatcherPorts(client, inputs.proposal.software_system_id, inputs.dispatcher);
   }
   const roles = deliveryRolesForKind(input.kind).filter((role) => !input.roles || input.roles.includes(role));
+  const onProgress = input.onProgress;
+  const reporter =
+    (role: CodegenRole, repo: SoftwareSystemRepo): ReportPhase =>
+    async (phase, extra) => {
+      if (onProgress) await onProgress({ role, repo: repo.name, phase, ...extra });
+    };
+  for (const role of roles) {
+    const repo = resolveRoleRepo(repos, role);
+    if (repo) await reporter(role, repo)('queued');
+  }
+  const deliver = async (role: CodegenRole, repo: SoftwareSystemRepo): Promise<DataModelDelivery> => {
+    const report = reporter(role, repo);
+    const delivery = await deliverToRepo(client, inputs, role, repo, input.autoMerge === true, input.kind, report);
+    const { phase, ...extra } = finalProgress(delivery);
+    await report(phase, extra);
+    return delivery;
+  };
 
   const targets: DeliveryTarget[] = [];
   for (const role of roles) {
@@ -281,21 +314,23 @@ export const processDeliverDataModel = async (
       targets.push({ role, repo, delivery: null });
       continue;
     }
+    await reporter(role, repo)('checking');
     // A PR merged (or closed) on GitHub since we last looked counts too.
     const current = existing.find((item) => item.software_system_repo_id === repo.id && (item.kind ?? 'model') === input.kind);
     const synced = current ? await syncDeliveryPullRequest(client, current) : null;
     const merged = synced?.status === 'merged' ? synced : null;
     if (merged && isRedeliverableKind(input.kind) && (await hasNewFiles(client, inputs, input.kind, role, repo))) {
       // Layout and list pages grow with the repo (routes, links and pages for new tables): deliver again.
-      targets.push({ role, repo, delivery: await deliverToRepo(client, inputs, role, repo, input.autoMerge === true, input.kind) });
+      targets.push({ role, repo, delivery: await deliver(role, repo) });
       continue;
     }
     if (merged) {
       console.log('⏭️ [data-model-deliveries] Already merged, skipping', { repo: repo.name, pr: merged.pr_number });
+      await reporter(role, repo)('unchanged', { files: merged.files?.length ?? null, pr_url: merged.pr_url || null, pr_number: merged.pr_number });
       targets.push({ role, repo, delivery: merged });
       continue;
     }
-    targets.push({ role, repo, delivery: await deliverToRepo(client, inputs, role, repo, input.autoMerge === true, input.kind) });
+    targets.push({ role, repo, delivery: await deliver(role, repo) });
   }
   return targets;
 };

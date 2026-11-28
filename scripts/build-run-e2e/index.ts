@@ -4,7 +4,9 @@
  *
  * Usage: npx ts-node scripts/build-run-e2e/index.ts --templates <dir with codegen template repos> \
  *          --template-repos <dir with template repo checkouts> --storage <code-generator-storage-server dir>
- * Add --keep-alive to leave the stack running for UI testing. Creates and drops the Postgres database `cc_build_e2e`.
+ * Add --keep-alive to leave the stack running for UI testing, with a "Demo Notes" project whose
+ * approved data model is ready for Build all; GitHub then answers slowly (--slow-ms, default 300)
+ * so the In progress view shows each phase. Creates and drops the Postgres database `cc_build_e2e`.
  */
 import { execSync, spawn, type ChildProcess } from 'child_process';
 import fs from 'fs';
@@ -28,6 +30,9 @@ const API_PORT = 3995;
 const API = `http://127.0.0.1:${API_PORT}/api/data`;
 /** Leave the stack running after the checks (one completed and one paused run) for UI testing; Ctrl+C stops it. */
 const KEEP_ALIVE = process.argv.includes('--keep-alive');
+const SLOW_MS = process.argv.includes('--slow-ms') ? Number(arg('slow-ms')) : 300;
+/** GitHub answers instantly during the checks, slowly once the stack is kept alive for the UI. */
+let githubDelayMs = 0;
 
 let passed = 0;
 const check = (condition: unknown, message: string): void => {
@@ -112,9 +117,14 @@ const main = async (): Promise<void> => {
     const draftId = sql(proposalSql(systemId, 'ready', fixture.version + 1));
     const proposalId = sql(proposalSql(systemId, 'approved'));
 
-    await startMockServer(MOCK_PORT, github, () => {
-      throw new Error('Build all makes no AI calls');
-    });
+    await startMockServer(
+      MOCK_PORT,
+      github,
+      () => {
+        throw new Error('Build all makes no AI calls');
+      },
+      { githubDelayMs: () => githubDelayMs },
+    );
     const storageLog = fs.openSync(path.join(logDir, 'storage.log'), 'w');
     children.push(spawn('npx', ['ts-node', path.join(STORAGE_DIR, 'index.ts')], { cwd: logDir, env: { ...process.env, PORT: String(STORAGE_PORT), STORAGE_BIND_HOST: '127.0.0.1', DATABASE_URL: `postgresql:///${DB}`, STORAGE_DISPATCHER_SECRET: 'e2e' }, stdio: ['ignore', storageLog, storageLog] }));
     const apiLog = fs.openSync(path.join(logDir, 'api.log'), 'w');
@@ -153,6 +163,10 @@ const main = async (): Promise<void> => {
     check(detail.run.status === 'paused' && detail.run.current_kind === 'model', `paused on the data model step (${stepSummary(detail)} ${detail.run.error ?? ''})`);
     const modelStep = detail.steps.find((step: any) => step.kind === 'model');
     check(modelStep.status === 'waiting_merge' && modelStep.note.includes('acme-web') && modelStep.delivery_ids.length === 3, 'model step waits on the web PR and records its three deliveries');
+    const modelPhases = (modelStep.progress?.repos ?? []).map((repo: any) => `${repo.role}:${repo.phase}`).join(' ');
+    check(modelPhases === 'storage:merged express:merged web:open', `step progress shows each repo's phase (${modelPhases})`);
+    const webProgress = modelStep.progress.repos.find((repo: any) => repo.role === 'web');
+    check(webProgress.pr_number && webProgress.pr_url && webProgress.files > 0 && webProgress.error, 'open repo keeps its PR, file count and the merge error');
     check(github.repos.get('acme/acme-storage-express-server')!.pulls[0]?.merged && github.repos.get('acme/acme-express-server')!.pulls[0]?.merged, 'storage and express PRs were squash-merged');
     check(github.repos.get('acme/acme-web')!.pulls[0]?.state === 'open', 'web PR left open');
     check(detail.events.some((event: any) => event.event_type === 'step_waiting' && event.detail?.pr_urls?.length === 3), 'log records the wait with the PR links');
@@ -164,6 +178,10 @@ const main = async (): Promise<void> => {
     detail = await waitForRun(runId, ['paused', 'failed', 'completed']);
     check(detail.run.status === 'completed', `run completes (${stepSummary(detail)} ${detail.run.error ?? ''})`);
     check(stepSummary(detail) === 'model:merged crud:merged layout:merged list:merged detail:merged dashboard:merged dispatcher:skipped', 'every step merged, dispatcher skipped');
+    const notMerged = detail.steps
+      .filter((step: any) => step.status === 'merged')
+      .flatMap((step: any) => (step.progress?.repos ?? []).filter((repo: any) => repo.phase !== 'merged').map((repo: any) => `${step.kind}/${repo.role}:${repo.phase}`));
+    check(notMerged.length === 0 && detail.steps.filter((step: any) => step.status === 'merged').every((step: any) => step.progress?.repos?.length > 0), `every merged step's repos end merged (${notMerged.join(' ')})`);
     check(detail.run.finished_at && detail.run.current_kind === null, 'run finished, no current step');
     check(github.repos.get('acme/acme-web')!.pulls[0].merged, 'the open web PR was merged on continue (not reopened)');
     const deliveries = sql(`select string_agg(kind || ':' || role || ':' || status, ' ' order by kind, role) from data_model_deliveries where proposal_id = '${proposalId}'`);
@@ -184,6 +202,8 @@ const main = async (): Promise<void> => {
     check(detail.run.status === 'completed', `second run completes (${stepSummary(detail)} ${detail.run.error ?? ''})`);
     const pullsAfter = Object.values(PROJECT).map((name) => github.repos.get(`acme/${name}`)!.pulls.length).join(',');
     check(pullsBefore === pullsAfter, `no new PRs: merged repos are skipped (${pullsBefore} → ${pullsAfter})`);
+    const secondPhases = new Set(detail.steps.flatMap((step: any) => (step.progress?.repos ?? []).map((repo: any) => repo.phase)));
+    check([...secondPhases].every((phase) => phase === 'unchanged'), `second run reports repos as already merged (${[...secondPhases].join(',')})`);
     const listed = await request('GET', `/system-build-runs?software_system_id=${systemId}`);
     check(listed.data.length === 2 && listed.data[0].id === again.data.run.id, 'list returns both runs, newest first');
 
@@ -207,7 +227,15 @@ const main = async (): Promise<void> => {
     if (KEEP_ALIVE) {
       const paused = await request('POST', '/system-build-runs', { proposal_id: betaProposal });
       await waitForRun(paused.data.run.id, ['paused', 'failed', 'completed']);
-      console.log(`\nStack kept alive: API ${API} (Acme Ops: completed run; Beta: paused run). Ctrl+C to stop.`);
+      const demoId = sql("insert into software_systems (customer_id, name, setup_preset_key) values (gen_random_uuid(), 'Demo Notes', 'supabase_customer') returning id");
+      for (const [role, name] of Object.entries(PROJECT)) {
+        const demoName = name.replace(/^acme-/, 'demo-notes-');
+        github.createRepo(`acme/${demoName}`, readTree(path.join(TEMPLATE_REPOS, TEMPLATE_FOR[role as keyof typeof TEMPLATE_FOR])));
+        sql(`insert into software_system_repos (customer_id, software_system_id, repo_type, role, name, repo_url) values (gen_random_uuid(), '${demoId}', '${REPO_TYPE[role as keyof typeof REPO_TYPE]}', '${role}', '${demoName}', 'https://github.com/acme/${demoName}')`);
+      }
+      sql(proposalSql(demoId, 'approved'));
+      githubDelayMs = SLOW_MS;
+      console.log(`\nStack kept alive: API ${API} (Acme Ops: completed run; Beta: paused run; Demo Notes: press Build all, GitHub answers in ${SLOW_MS} ms). Ctrl+C to stop.`);
       await new Promise<void>((resolve) => process.once('SIGINT', () => resolve()));
     }
   } finally {

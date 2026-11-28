@@ -207,8 +207,11 @@ export type AiResponder = (input: { system: string; user: string }) => unknown;
 
 const sse = (event: string, data: unknown): string => `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 
-/** Starts both doubles on one port: /repos/* → GitHub, /v1/messages → Anthropic (streaming). */
-export const startMockServer = (port: number, github: MockGithub, ai: AiResponder): Promise<http.Server> =>
+/**
+ * Starts both doubles on one port: /repos/* → GitHub, /v1/messages → Anthropic (streaming).
+ * `githubDelayMs` (read per request) slows GitHub answers so a UI can show work in progress.
+ */
+export const startMockServer = (port: number, github: MockGithub, ai: AiResponder, options: { githubDelayMs?: () => number } = {}): Promise<http.Server> =>
   new Promise((resolve) => {
     const server = http.createServer((req, res) => {
       let raw = '';
@@ -240,8 +243,10 @@ export const startMockServer = (port: number, github: MockGithub, ai: AiResponde
           return;
         }
         const result = github.handle(req.method ?? 'GET', url, body);
-        res.writeHead(result.status, { 'content-type': 'application/json' });
-        res.end(result.json === null ? '' : JSON.stringify(result.json));
+        setTimeout(() => {
+          res.writeHead(result.status, { 'content-type': 'application/json' });
+          res.end(result.json === null ? '' : JSON.stringify(result.json));
+        }, options.githubDelayMs?.() ?? 0);
       });
     });
     server.listen(port, '127.0.0.1', () => resolve(server));

@@ -7,6 +7,7 @@ import { processDeliverDataModel } from '../data-model-deliveries/process-delive
 import type { DeliveryTarget } from '../data-model-deliveries/types';
 import { tabLabel } from './config';
 import { recordSystemBuildEvent } from './record-system-build-event';
+import { trackStepProgress } from './track-step-progress';
 
 /** Runs executing in this process (a `running` run missing here after a restart is stale). */
 export const activeSystemBuildRuns = new Set<string>();
@@ -31,7 +32,12 @@ const runStep = async (client: CanonicalDataClient, run: SystemBuildRun, step: S
 
   let targets: DeliveryTarget[];
   try {
-    targets = await processDeliverDataModel(client, { proposalId: run.proposal_id, kind: step.kind, autoMerge: true });
+    targets = await processDeliverDataModel(client, {
+      proposalId: run.proposal_id,
+      kind: step.kind,
+      autoMerge: true,
+      onProgress: trackStepProgress(client, step.id, step.progress),
+    });
   } catch (error) {
     const message = errorMessage(error);
     await updateSystemBuildRunStep(client, step.id, { status: 'failed', error: message, finished_at: now() });

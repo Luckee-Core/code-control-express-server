@@ -26,6 +26,7 @@ POST /:id/continue → re-runs the stopped step (merged repos are skipped, open 
 - **Service:** `src/services/system-build-runs/` (`config` with `BUILD_STEPS`, `plan-system-build-steps`, `run-system-build` with `activeSystemBuildRuns` and `startSystemBuildRun`, `settle-stale-system-build-run`, `record-system-build-event`, `process-*`). Same background pattern as ticket-build planning: `void run().catch(mark failed)`; a run still `running` 30 minutes after its last update with no job in this process is marked failed and can be continued.
 - **Cancel** stops between steps; a step already delivering finishes.
 - **Log:** every step start, merge, skip, wait and failure is a `system_build_run_events` row (storage ADR 023) with PR links in `detail`.
+- **Live progress:** `processDeliverDataModel` takes an optional `onProgress` listener and reports each repo's phase (`queued → checking → rendering → committing → opening_pr → merging`, then `merged`, `unchanged`, `open` or `failed`) with file counts and PR links. `track-step-progress` saves the list on `system_build_run_steps.progress` (storage migration 120) after each move; a failed write is logged and never stops the delivery. The tabs pass no listener.
 - **Endpoints:** `/api/data/system-build-runs` (GET ?software_system_id=, POST, GET /:id, POST /:id/continue, POST /:id/cancel). Starts and continues answer 202.
 
 ## Consequences
